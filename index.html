@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>OLIVER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        body{
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(45deg, red, blue, green, black);
+            background-size: 400% 400%;
+            position: relative;
+        }
+        
+
+
+        h1, h2 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+        
+        #mainMenu, #levelSelection, #subjectSelection, #questionContainer, #endScreen, #perso, #customQuestionForm {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px 0;
+            margin: 10px 0;
+            background-color: #8234db;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        
+        #options button {
+            width: 45%;
+            margin: 5px;
+        }
+        
+        #lives, #timer, #finalScore {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        #customQuestionsList {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        #customQuestionsList li {
+            margin-bottom: 10px;
+        }
+        
+        #customQuestionsList li span {
+            font-weight: bold;
+        }
+        
+        #customQuestionsList button {
+            width: 48%;
+            margin: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="mainMenu">
+        <h1>QuizzyMind</h1>
+        <button id="btnPlay">Jugar</button>
+    </div>
+
+    <div id="levelSelection" style="display:none;">
+        <h2>Selecciona el nivel</h2>
+        <button id="btnPrepa">Preparatoria</button>
+        <button id="btnSecundaria">Secundaria</button>
+        <button id="btnBackToMenu">Volver al menú</button>
+    </div>
+
+    <div id="subjectSelection" style="display:none;">
+        <h2>Selecciona la materia</h2>
+        <div id="subjects"></div>
+        <button id="btnBackToLevel">Volver</button>
+    </div>
+
+    <div id="questionContainer" style="display:none;">
+        <h2 id="question"></h2>
+        <div id="options"></div>
+        <div id="lives">Vidas: 3</div>
+        <div id="timer">Tiempo: 02:00</div>
+    </div>
+
+    <div id="endScreen" style="display:none;">
+        <h2 id="finalScore"></h2>
+        <button id="btnBackToMenuFromEnd">Volver al menú</button>
+    </div>
+
+    <div id="perso" style="display:none;">
+        <h2>Preguntas Personalizadas</h2>
+        <ul id="customQuestionsList"></ul>
+        <button id="btnAddCustomQuestion">Agregar Pregunta</button>
+        <button id="btnBackToSubjectSelectionCustom">Volver</button>
+    </div>
+
+    <div id="customQuestionForm" style="display:none;">
+        <h2>Agregar Pregunta Personalizada</h2>
+        <form id="customQuestionFormForm">
+            <label for="questionInput">Pregunta:</label>
+            <input type="text" id="questionInput" name="question" required>
+            <br>
+            <label for="optionsInput">Opciones (separadas por comas):</label>
+            <input type="text" id="optionsInput" name="options" required>
+            <br>
+            <label for="answerInput">Respuesta correcta:</label>
+            <input type="text" id="answerInput" name="answer" required>
+            <br>
+            <button type="submit">Agregar</button>
+        </form>
+        <button id="btnCancelAddQuestion">Cancelar</button>
+    </div>
+
+    <audio id="backgroundAudio" loop>
+        <source src="encoded-20240520184249" type="audio/mp3">
+    </audio>
+
+    <script>
+        const questions = {
+            prepa: {
+                Matematicas: [
+                    { question: "¿Cuál es la raíz cuadrada de 4?", options: ["2", "3", "4", "5"], answer: "2" },
+                    { question: '¿Cuál es la derivada de ln(x)?', options: ['1/x', 'x', '1', '0'], answer: '1/x' },
+                    { question: '¿Cuál es el límite cuando x tiende a infinito de 1/x?', options: ['1', '0', 'No tiene limite', 'Infinito'], answer: '0' },
+                    { question: '¿Cuál es la integral indefinida de 2x dx?', options: ['2x', '2x^2 + C', 'x^2', 'x^2 + C'], answer: 'x^2 + C' },
+                    { question: '¿Cuál es el resultado de la operación 3^2 * 4^3?', options: ['1728', '1296', '576', '81'], answer: '576' },
+                    { question: '¿Cuál es el valor de x en la ecuación 2x + 5 = 15?', options: ['10', '15', '5', '20'], answer: '5' },
+                    { question: '¿Cuál es el valor de la expresión 3! (3 factorial)?', options: ['3', '9', '27', '6'], answer: '6' },
+                    { question: '¿Cuál es la raíz cuadrada de 144?', options: ['10', '16', '12', '18'], answer: '12' },
+                    { question: '¿Cuál es el valor de x en la ecuación x^2 - 5x + 6 = 0?', options: ['3 y 4', '2 y 3', '2 y 4', '1 y 6'], answer: '2 y 3' },
+                    { question: '¿Cuál es el resultado de la operación 1/2 + 1/3?', options: ['1/5', '3/7', '5/6', '2/3'], answer: '5/6' },
+                    { question: '¿Cuál es la derivada de x^2 con respecto a x?', options: ['1', 'x^2', '0', '2x'], answer: '2x' },
+                    { question: '¿Cuál es la solución de la ecuación sen(x) = 0?', options: ['1', 'π', '0', '∞'], answer: '0' },
+                    { question: '¿Cuál es el resultado de la operación log(1000) base 10?', options: ['2', '1', '3', '4'], answer: '3' },
+                    { question: '¿Cuál es el valor de x en la ecuación log(x) = 2?', options: ['10', '1', '100', '0'], answer: '100' },
+                    { question: '¿Cuál es el resultado de la operación 2^5?', options: ['16', '64', '32', '128'], answer: '32' },
+                    { question: '¿Cuál es el valor de x en la ecuación 2^x = 16?', options: ['2', '3', '4', '1'], answer: '4' },
+                    { question: '¿Cuál es el resultado de la operación √(25 + 16)?', options: ['√41', '9', '5', '7'], answer: '√41' },
+                    { question: '¿Cuál es el valor de x en la ecuación 3x - 2 = 7?', options: ['2', '5', '3', '4'], answer: '3' },
+                    { question: '¿Cuál es el resultado de la operación 4! (4 factorial)?', options: ['16', '8', '24', '12'], answer: '24' },
+                    { question: '¿Cuál es el área de un círculo de radio 5?', options: ['25π', '10π', '20π', '5π'], answer: '25π' },
+                    { question: '¿Cuál es la derivada de e^x?', options: ['e^x', 'e', '1', '0'], answer: 'e^x'}
+                ],
+                Historia: [
+                { question: '¿En qué año comenzó la Revolución Mexicana?', options: ['1900', '1910', '1920', '1930'], answer: '1910' },
+                { question: '¿Quién fue el primer presidente de México?', options: ['Benito Juárez', 'Porfirio Díaz', 'Guadalupe Victoria', 'Emiliano Zapata'], answer: 'Guadalupe Victoria' },
+                { question: '¿En qué año llegaron los españoles a América?', options: ['1521', '1500', '1492', '1600'], answer: '1492' },
+                { question: '¿Cuál fue la última civilización mesoamericana?', options: ['Mayas', 'Aztecas', 'Toltecas', 'OlmeCas'], answer: 'Aztecas' },
+                { question: '¿En qué año se promulgó la Constitución Mexicana?', options: ['1808', '1810', '1821', '1917'], answer: '1917' },
+                { question: '¿Quién fue el líder de la Revolución Rusa de 1917?', options: ['Lenin', 'Stalin', 'Trotsky', 'Kerensky'], answer: 'Lenin' },
+                { question: '¿En qué año terminó la Segunda Guerra Mundial?', options: ['1939', '1950', '1945', '1941'], answer: '1945' },
+                { question: '¿Quién fue el presidente de Estados Unidos durante la Guerra Fría?', options: ['John F. Kennedy', 'Richard Nixon', 'Harry S. Truman', 'Ronald Reagan'], answer: 'John F. Kennedy' },
+                { question: '¿En qué año se produjo la independencia de Estados Unidos?', options: ['1789', '1804', '1776', '1812'], answer: '1776' },
+                { question: '¿Cuál fue la causa principal de la Revolución Francesa?', options: ['Desigualdad social', 'Invasión extranjera', 'Hambre', 'Dictadura'], answer: 'Desigualdad social' },
+                { question: '¿Quién fue el líder de la independencia de la India?', options: ['Mahatma Gandhi', 'Jawaharlal Nehru', 'Indira Gandhi', 'Bhagat Singh'], answer: 'Mahatma Gandhi' },
+                { question: '¿Cuál fue el objetivo de la expedición de Cristóbal Colón en 1492?', options: ['Llegar a Asia por mar', 'Explorar nuevas tierras', 'Encontrar una nueva ruta comercial', 'Conquistar territorios para España'], answer: 'Llegar a Asia por mar' },
+                { question: '¿Quién fue el primer emperador romano?', options: ['Julio César', 'Augusto', 'Nerón', 'Trajano'], answer: 'Augusto' },
+                { question: '¿Qué evento dio inicio a la Primera Guerra Mundial?', options: ['Asesinato del archiduque Francisco Fernando', 'Invasión de Polonia', 'Ataque a Pearl Harbor', 'Firma del Tratado de Versalles'], answer: 'Asesinato del archiduque Francisco Fernando' },
+                { question: '¿Cuál fue el período conocido como la "Pax Romana"?', options: ['Periodo de paz y estabilidad en el Imperio Romano', 'Período de expansión territorial romana', 'Período de declive del Imperio Romano', 'Período de guerras civiles en Roma'], answer: 'Periodo de paz y estabilidad en el Imperio Romano' },
+                { question: '¿Cuál fue la causa principal de la Revolución Industrial?', options: ['Aumento de la poblacion', 'Desarrollo de nuevas tecnologías', 'Mejoras en el sistema educativo', 'Crecimiento del comercio internacional'], answer: 'Desarrollo de nuevas tecnologías' },
+                { question: '¿Quién fue el presidente de Estados Unidos durante la Guerra de Vietnam?', options: ['Lyndon B. Johnson', 'Richard Nixon', 'John F. Kennedy', 'Dwight D. Eisenhower'], answer: 'Lyndon B. Johnson' },
+                { question: '¿En qué año se firmó la Declaración de Independencia de Estados Unidos?', options: ['1776', '1789', '1804', '1812'], answer: '1776' },
+                { question: '¿Cuál fue el objetivo de la expedición de Hernán Cortés en 1519?', options: ['Encontrar el paso del Noroeste', 'Buscar una ruta a Asia', 'Explorar y conquistar México', 'Descubrir nuevas especias'], answer: 'Explorar y conquistar México' },
+                { question: '¿En qué año se proclamó la independencia de México?', options: ['1810', '1821', '1830', '1848'], answer: '1821' }
+                ],
+                Ingles: [
+                { question: 'What is the plural of "child"?', options: ['Childs', 'Children', 'Childes', 'Child'], answer: 'Children' },
+                { question: 'Which word is a synonym for "happy"?', options: ['Sad', 'Excited', 'Angry', 'Tired'], answer: 'Excited' },
+                { question: 'What is the past tense of "go"?', options: ['Went', 'Goed', 'Gone', 'Goes'], answer: 'Went' },
+                { question: 'What does "DNA" stand for?', options: ['Deoxyribonucleic Acid', 'Deoxyribose Nucleic Acid', 'Deoxynucleic Acid', 'Dioxyribonucleic Acid'], answer: 'Deoxyribonucleic Acid' },
+                { question: 'Who wrote the play "Romeo and Juliet"?', options: ['William Shakespeare', 'Jane Austen', 'Charles Dickens', 'Mark Twain'], answer: 'William Shakespeare' },
+                { question: 'Which word is a noun?', options: ['Run', 'Quickly', 'Happiness', 'Jump'], answer: 'Happiness' },
+                { question: 'What is the capital of Canada?', options: ['Toronto', 'Vancouver', 'Ottawa', 'Montreal'], answer: 'Ottawa' },
+                { question: 'What is the comparative form of "good"?', options: ['Better', 'Best', 'Gooder', 'Goodest'], answer: 'Better' },
+                { question: 'Who is known as the "Father of Computers"?', options: ['Charles Babbage', 'Alan Turing', 'Steve Jobs', 'Bill Gates'], answer: 'Charles Babbage' },
+                { question: 'What is the longest river in the world?', options: ['Nile', 'Amazon', 'Yangtze', 'Mississippi'], answer: 'Nile' },
+                { question: 'Which country is known as the "Land of the Rising Sun"?', options: ['China', 'Japan', 'South Korea', 'Vietnam'], answer: 'Japan' },
+                { question: 'Who painted the Mona Lisa?', options: ['Leonardo da Vinci', 'Pablo Picasso', 'Vincent van Gogh', 'Michelangelo'], answer: 'Leonardo da Vinci' },
+                { question: 'What is the largest mammal in the world?', options: ['Elephant', 'Blue whale', 'Giraffe', 'Hippo'], answer: 'Blue whale' },
+                { question: 'What is the chemical symbol for gold?', options: ['Au', 'Ag', 'Fe', 'Cu'], answer: 'Au' },
+                { question: 'Which planet is known as the "Red Planet"?', options: ['Mars', 'Venus', 'Jupiter', 'Mercury'], answer: 'Mars' },
+                { question: 'Who discovered penicillin?', options: ['Alexander Fleming', 'Marie Curie', 'Louis Pasteur', 'Robert Koch'], answer: 'Alexander Fleming' },
+                { question: 'Which animal is known as the "Ship of the Desert"?', options: ['Camel', 'Elephant', 'Horse', 'Donkey'], answer: 'Camel' },
+                { question: 'What is the capital of Australia?', options: ['Sydney', 'Melbourne', 'Canberra', 'Brisbane'], answer: 'Canberra' },
+                { question: 'Who wrote the novel "Pride and Prejudice"?', options: ['Jane Austen', 'Charles Dickens', 'Emily Brontë', 'Charlotte Brontë'], answer: 'Jane Austen' },
+                { question: 'Which of the following is a modal verb?', options: ['Walk', 'Eat', 'Can', 'Run'], answer: 'Can' }                  
+    ],
+    Fisica : [
+    { question: '¿Qué es la refracción en términos físicos?', options: ['El cambio de dirección de una onda al pasar de un medio a otro', 'La capacidad de un material para resistir la deformación', 'La propiedad de un material para recuperar su forma original después de ser deformado', 'La tendencia de un objeto a permanecer en reposo o en movimiento rectilíneo uniforme'], answer: 'El cambio de dirección de una onda al pasar de un medio a otro' },
+    { question: '¿Cuál es la fórmula para calcular la velocidad media?', options: ['v = d / t', 'v = t / d', 'v = d * t', 'v = d + t'], answer: 'v = d / t' },
+    { question: '¿Qué ley de la física establece que "a toda acción hay siempre una reacción igual y opuesta"?', options: ['Ley de Gravitación Universal', 'Ley de Coulomb', 'Tercera Ley de Newton', 'Ley de la Inercia'], answer: 'Tercera Ley de Newton' },
+    { question: '¿Qué unidad se utiliza para medir la corriente eléctrica?', options: ['Voltio', 'Amperio', 'Ohmio', 'Watt'], answer: 'Amperio' },
+    { question: '¿Cuál es la unidad de medida de la fuerza en el sistema internacional?', options: ['Newton', 'Joule', 'Vatio', 'Metro'], answer: 'Newton' },
+    { question: '¿Cuál es la ley de la física que describe cómo la fuerza aplicada a un cuerpo produce un cambio en su movimiento?', options: ['Ley de Gravitación Universal', 'Segunda Ley de Newton', 'Principio de Arquímedes', 'Ley de la Conservación de la Energía'], answer: 'Segunda Ley de Newton' },
+    { question: '¿Cuál es la unidad de medida de la energía en el sistema internacional?', options: ['Voltio', 'Amperio', 'Joule', 'Watt'], answer: 'Joule' },
+    { question: '¿Qué tipo de energía se encuentra en un objeto en movimiento?', options: ['Energía potencial', 'Energía cinética', 'Energía mecánica', 'Energía térmica'], answer: 'Energía cinética' },
+    { question: '¿Cuál es la primera ley de la termodinámica?', options: ['Ley de la Conservación de la Energía', 'Ley de Boyle', 'Ley de Charles', 'Ley de Avogadro'], answer: 'Ley de la Conservación de la Energía' },
+    { question: '¿Qué tipo de onda es el sonido?', options: ['Onda electromagnética', 'Onda mecánica', 'Onda longitudinal', 'Onda transversal'], answer: 'Onda longitudinal' },
+    { question: '¿Cuál es la unidad de medida de la frecuencia de una onda?', options: ['Hertz', 'Watt', 'Joule', 'Newton'], answer: 'Hertz' },
+    { question: '¿Qué ley de la física describe cómo se comportan los gases ideales?', options: ['Ley de Boyle', 'Ley de Charles', 'Ley de Avogadro', 'Ley de Dalton'], answer: 'Ley de Boyle' },
+    { question: '¿Cuál es la unidad de medida de la resistencia eléctrica?', options: ['Voltio', 'Amperio', 'Ohmio', 'Watt'], answer: 'Ohmio' },
+    { question: '¿Qué ley de la física describe la relación entre la carga eléctrica, la distancia y la fuerza eléctrica?', options: ['Ley de Gravitación Universal', 'Ley de Coulomb', 'Tercera Ley de Newton', 'Ley de la Inercia'], answer: 'Ley de Coulomb' },
+    { question: '¿Qué tipo de energía se encuentra en un objeto en reposo?', options: ['Energía potencial', 'Energía cinética', 'Energía mecánica', 'Energía térmica'], answer: 'Energía potencial' },
+    { question: '¿Cuál es la segunda ley de la termodinámica?', options: ['La energía no se crea ni se destruye, solo se transforma', 'El calor fluye de un cuerpo caliente a uno frío', 'La entropía de un sistema aislado tiende a aumentar', 'La presión de un gas es inversamente proporcional a su volumen'], answer: 'La entropía de un sistema aislado tiende a aumentar' },
+    { question: '¿Qué tipo de fuerza mantiene unidos los átomos en una molécula?', options: ['Fuerza electromagnética', 'Fuerza nuclear fuerte', 'Fuerza nuclear débil', 'Fuerza gravitatoria'], answer: 'Fuerza electromagnética' },
+    { question: '¿Cuál es la unidad de medida del trabajo en el sistema internacional?', options: ['Voltio', 'Amperio', 'Joule', 'Watt'], answer: 'Joule' },
+    { question: '¿Cuál es la unidad de medida de la potencia en el sistema internacional?', options: ['Voltio', 'Amperio', 'Joule', 'Watt'], answer: 'Watt' },
+    { question: '¿Qué ley de la física establece que "todo cuerpo persevera en su estado de reposo o movimiento uniforme en línea recta a menos que sea obligado a cambiar su estado por fuerzas impresas sobre él"?', options: ['Primera Ley de Newton', 'Segunda Ley de Newton', 'Tercera Ley de Newton', 'Ley de la Inercia'], answer: 'Primera Ley de Newton' }
+],
+Quimica : [
+    { question: '¿Cuál es la fórmula química del agua?', options: ['H2O', 'CO2', 'NaCl', 'O2'], answer: 'H2O' },
+    { question: '¿Qué es un ácido según la definición de Arrhenius?', options: ['Una sustancia que aumenta la concentración de iones hidronio (H3O+) en solución acuosa', 'Una sustancia que aumenta la concentración de iones hidróxido (OH-) en solución acuosa', 'Una sustancia que libera protones (H+) en solución acuosa', 'Una sustancia que acepta electrones en una reacción química'], answer: 'Una sustancia que aumenta la concentración de iones hidronio (H3O+) en solución acuosa' },
+    { question: '¿Cuál es la fórmula química del dióxido de carbono?', options: ['CO2', 'H2O', 'O2', 'CH4'], answer: 'CO2' },
+    { question: '¿Qué es un ácido según la definición de Brønsted-Lowry?', options: ['Una sustancia que aumenta la concentración de iones hidronio (H3O+) en solución acuosa', 'Una sustancia que aumenta la concentración de iones hidróxido (OH-) en solución acuosa', 'Una sustancia que libera protones (H+) en solución acuosa', 'Una sustancia que acepta electrones en una reacción química'], answer: 'Una sustancia que libera protones (H+) en solución acuosa' },
+    { question: '¿Qué es una base según la definición de Arrhenius?', options: ['Una sustancia que aumenta la concentración de iones hidronio (H3O+) en solución acuosa', 'Una sustancia que aumenta la concentración de iones hidróxido (OH-) en solución acuosa', 'Una sustancia que libera protones (H+) en solución acuosa', 'Una sustancia que acepta electrones en una reacción química'], answer: 'Una sustancia que aumenta la concentración de iones hidróxido (OH-) en solución acuosa' },
+    { question: '¿Cuál es la fórmula química del cloruro de sodio?', options: ['NaCl', 'H2O', 'CO2', 'O2'], answer: 'NaCl' },
+    { question: '¿Qué es una base según la definición de Brønsted-Lowry?', options: ['Una sustancia que aumenta la concentración de iones hidronio (H3O+) en solución acuosa', 'Una sustancia que aumenta la concentración de iones hidróxido (OH-) en solución acuosa', 'Una sustancia que libera protones (H+) en solución acuosa', 'Una sustancia que acepta electrones en una reacción química'], answer: 'Una sustancia que acepta electrones en una reacción química' },
+    { question: '¿Cuál es la fórmula química del amoníaco?', options: ['NH3', 'H2O', 'CO2', 'O2'], answer: 'NH3' },
+    { question: '¿Qué es un ion?', options: ['Un átomo con carga eléctrica debido a la pérdida o ganancia de electrones', 'Un átomo que ha perdido un protón', 'Un átomo que ha ganado un neutrón', 'Un átomo con un número atómico diferente al habitual'], answer: 'Un átomo con carga eléctrica debido a la pérdida o ganancia de electrones' },
+    { question: '¿Cuál es la fórmula química del ácido clorhídrico?', options: ['HCl', 'NaCl', 'CH4', 'NH3'], answer: 'HCl' },
+    { question: '¿Qué es un enlace iónico?', options: ['Un enlace químico entre átomos formado por la transferencia de electrones de un átomo a otro', 'Un enlace químico donde los átomos comparten pares de electrones', 'Un enlace que involucra la interacción de protones y electrones', 'Un enlace que ocurre entre dos átomos del mismo elemento'], answer: 'Un enlace químico entre átomos formado por la transferencia de electrones de un átomo a otro' },
+    { question: '¿Qué es la ley de conservación de la masa en una reacción química?', options: ['La masa total de los productos es igual a la masa total de los reactivos', 'La masa total de los productos es mayor que la masa total de los reactivos', 'La masa total de los productos es menor que la masa total de los reactivos', 'La masa total de los productos es igual a cero'], answer: 'La masa total de los productos es igual a la masa total de los reactivos' },
+    { question: '¿Qué es una mezcla homogénea?', options: ['Una mezcla en la que los componentes están completamente mezclados y no se pueden distinguir a simple vista', 'Una mezcla en la que los componentes se pueden distinguir a simple vista', 'Una mezcla en la que los componentes forman capas separadas', 'Una mezcla en la que los componentes se encuentran en proporciones variables'], answer: 'Una mezcla en la que los componentes están completamente mezclados y no se pueden distinguir a simple vista' },
+    { question: '¿Qué es una mezcla heterogénea?', options: ['Una mezcla en la que los componentes se pueden distinguir a simple vista', 'Una mezcla en la que los componentes están completamente mezclados y no se pueden distinguir a simple vista', 'Una mezcla en la que los componentes forman capas separadas', 'Una mezcla en la que los componentes se encuentran en proporciones variables'], answer: 'Una mezcla en la que los componentes se pueden distinguir a simple vista' },
+    { question: '¿Cuál es la diferencia entre una mezcla homogénea y una mezcla heterogénea?', options: ['En una mezcla homogénea, los componentes están completamente mezclados y no se pueden distinguir a simple vista, mientras que en una mezcla heterogénea los componentes se pueden distinguir', 'En una mezcla homogénea, los componentes se pueden distinguir a simple vista, mientras que en una mezcla heterogénea están completamente mezclados', 'Una mezcla homogénea siempre es una solución, mientras que una mezcla heterogénea no lo es', 'No hay diferencia, son términos intercambiables'], answer: 'En una mezcla homogénea, los componentes están completamente mezclados y no se pueden distinguir a simple vista, mientras que en una mezcla heterogénea los componentes se pueden distinguir' },
+    { question: '¿Qué es una solución en química?', options: ['Una mezcla homogénea de dos o más sustancias', 'Una mezcla heterogénea de dos o más sustancias', 'Una sustancia pura que no puede descomponerse en sustancias más simples por métodos químicos ordinarios', 'Una sustancia formada por la combinación de átomos de diferentes elementos en proporciones variables'], answer: 'Una mezcla homogénea de dos o más sustancias' },
+    { question: '¿Qué es un solvente en una solución?', options: ['El componente de una solución que está presente en mayor cantidad y disuelve al otro componente', 'El componente de una solución que está presente en menor cantidad y es disuelto por el otro componente', 'Un tipo de sustancia que no participa en una reacción química', 'Una sustancia que puede disolver otras sustancias'], answer: 'El componente de una solución que está presente en mayor cantidad y disuelve al otro componente' },
+    { question: '¿Qué es un soluto en una solución?', options: ['El componente de una solución que está presente en menor cantidad y es disuelto por el otro componente', 'El componente de una solución que está presente en mayor cantidad y disuelve al otro componente', 'Un tipo de sustancia que no participa en una reacción química', 'Una sustancia que puede disolver otras sustancias'], answer: 'El componente de una solución que está presente en menor cantidad y es disuelto por el otro componente' },
+    { question: '¿Qué es la densidad en química?', options: ['La masa por unidad de volumen de una sustancia', 'La cantidad de sustancia presente en una unidad de volumen', 'La capacidad de una sustancia para conducir electricidad', 'La medida de la tendencia de una sustancia a ceder electrones'], answer: 'La masa por unidad de volumen de una sustancia' },
+    { question: '¿Cuál es la ley de los gases ideales?', options: ['PV = nRT', 'PV = nkT', 'PV = nT', 'P = V/nT'], answer: 'PV = nRT' }
+],
+Geografia : [
+    { question: '¿Cuál es la capital de Francia?', options: ['Londres', 'París', 'Madrid', 'Berlín'], answer: 'París' },
+    { question: '¿Cuál es el río más largo del mundo?', options: ['Amazonas', 'Nilo', 'Yangtsé', 'Misisipi'], answer: 'Amazonas' },
+    { question: '¿En qué continente se encuentra el Desierto del Sahara?', options: ['África', 'Asia', 'América', 'Europa'], answer: 'África' },
+    { question: '¿Cuál es la montaña más alta del mundo?', options: ['Monte Everest', 'Monte Kilimanjaro', 'Monte McKinley', 'Monte Aconcagua'], answer: 'Monte Everest' },
+    { question: '¿Cuál es el país más grande del mundo por área terrestre?', options: ['Rusia', 'Canadá', 'China', 'Estados Unidos'], answer: 'Rusia' },
+    { question: '¿Cuál es el océano más grande de la Tierra?', options: ['Pacífico', 'Atlántico', 'Índico', 'Ártico'], answer: 'Pacífico' },
+    { question: '¿Cuál es el país más poblado del mundo?', options: ['China', 'India', 'Estados Unidos', 'Indonesia'], answer: 'China' },
+    { question: '¿Cuál es la capital de Australia?', options: ['Sídney', 'Melbourne', 'Brisbane', 'Camberra'], answer: 'Camberra' },
+    { question: '¿En qué continente se encuentra la Gran Barrera de Coral?', options: ['Oceanía', 'Asia', 'África', 'Europa'], answer: 'Oceanía' },
+    { question: '¿Cuál es el lago más profundo del mundo?', options: ['Baikal', 'Tanganica', 'Superior', 'Victoria'], answer: 'Baikal' },
+    { question: '¿Cuál es el punto más bajo de la Tierra?', options: ['Mar Muerto', 'Valle de la Muerte', 'Depresión de Afar', 'Fosa de las Marianas'], answer: 'Mar Muerto' },
+    { question: '¿Cuál es la capital de España?', options: ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'], answer: 'Madrid' },
+    { question: '¿Cuál es la ciudad más poblada del mundo?', options: ['Tokio', 'Shanghái', 'Mumbai', 'Ciudad de México'], answer: 'Tokio' },
+    { question: '¿Cuál es el desierto más grande del mundo?', options: ['Sahara', 'Arábigo', 'Gobi', 'Kalahari'], answer: 'Sahara' },
+    { question: '¿Cuál es el país más pequeño del mundo?', options: ['Vaticano', 'Mónaco', 'Nauru', 'San Marino'], answer: 'Vaticano' },
+    { question: '¿En qué país se encuentra el Taj Mahal?', options: ['India', 'Pakistán', 'Bangladesh', 'Nepal'], answer: 'India' },
+    { question: '¿Cuál es el país más extenso de América del Sur?', options: ['Brasil', 'Argentina', 'Colombia', 'Perú'], answer: 'Brasil' },
+    { question: '¿En qué país se encuentra el Monte Kilimanjaro?', options: ['Tanzania', 'Kenia', 'Uganda', 'Rwanda'], answer: 'Tanzania' },
+    { question: '¿Cuál es la capital de Canadá?', options: ['Toronto', 'Montreal', 'Vancouver', 'Ottawa'], answer: 'Ottawa' },
+    { question: '¿Cuál es el país más extenso de Europa?', options: ['Rusia', 'Francia', 'España', 'Ucrania'], answer: 'Rusia' }
+],
+Literatura : [
+    { question: '¿Quién escribió "Don Quijote de la Mancha"?', options: ['Miguel de Cervantes', 'Garcilaso de la Vega', 'Lope de Vega', 'Fernando de Rojas'], answer: 'Miguel de Cervantes' },
+    { question: '¿Cuál es la obra más famosa de Gabriel García Márquez?', options: ['Cien años de soledad', 'El amor en los tiempos del cólera', 'Crónica de una muerte anunciada', 'El coronel no tiene quien le escriba'], answer: 'Cien años de soledad' },
+    { question: '¿Quién escribió la obra "Romeo y Julieta"?', options: ['William Shakespeare', 'Molière', 'Federico García Lorca', 'Antón Chéjov'], answer: 'William Shakespeare' },
+    { question: '¿Quién escribió "La metamorfosis"?', options: ['Franz Kafka', 'Hermann Hesse', 'Thomas Mann', 'Albert Camus'], answer: 'Franz Kafka' },
+    { question: '¿Cuál es la obra más conocida de Julio Cortázar?', options: ['Rayuela', 'Los premios', 'Cronopios y famas', 'Final del juego'], answer: 'Rayuela' },
+    { question: '¿Quién escribió "El Aleph"?', options: ['Jorge Luis Borges', 'Mario Vargas Llosa', 'Pablo Neruda', 'Octavio Paz'], answer: 'Jorge Luis Borges' },
+    { question: '¿Cuál es la obra más famosa de Mario Benedetti?', options: ['La tregua', 'Gracias por el fuego', 'Montevideanos', 'La borra del café'], answer: 'La tregua' },
+    { question: '¿Quién escribió "La Odisea"?', options: ['Homero', 'Virgilio', 'Ovidio', 'Eurípides'], answer: 'Homero' },
+    { question: '¿Cuál es la obra más conocida de Gustavo Adolfo Bécquer?', options: ['Rimas y leyendas', 'Cartas desde mi celda', 'La ajorca de oro', 'El monte de las ánimas'], answer: 'Rimas y leyendas' },
+    { question: '¿Quién escribió "El principito"?', options: ['Antoine de Saint-Exupéry', 'Julio Verne', 'Mark Twain', 'Jules Verne'], answer: 'Antoine de Saint-Exupéry' },
+    { question: '¿Cuál es la obra más famosa de Albert Camus?', options: ['El extranjero', 'La peste', 'El mito de Sísifo', 'La caída'], answer: 'El extranjero' },
+    { question: '¿Quién escribió "Cien sonetos de amor"?', options: ['Pablo Neruda', 'Octavio Paz', 'Gabriel García Márquez', 'Jorge Luis Borges'], answer: 'Pablo Neruda' },
+    { question: '¿Cuál es la obra más conocida de José Saramago?', options: ['Ensayo sobre la ceguera', 'Las intermitencias de la muerte', 'El evangelio según Jesucristo', 'Memorial del convento'], answer: 'Ensayo sobre la ceguera' },
+    { question: '¿Quién escribió "La casa de los espíritus"?', options: ['Isabel Allende', 'Laura Esquivel', 'Gabriel García Márquez', 'Carlos Fuentes'], answer: 'Isabel Allende' },
+    { question: '¿Cuál es la obra más famosa de William Faulkner?', options: ['El ruido y la furia', 'Mientras agonizo', '¡Absalón, Absalón!', 'Santuario'], answer: 'El ruido y la furia' },
+    { question: '¿Quién escribió "Las aventuras de Tom Sawyer"?', options: ['Mark Twain', 'Charles Dickens', 'Jane Austen', 'Herman Melville'], answer: 'Mark Twain' },
+    { question: '¿Cuál es la obra más conocida de José Martí?', options: ['Versos sencillos', 'Ismaelillo', 'La edad de oro', 'Nuestra América'], answer: 'Versos sencillos' },
+    { question: '¿Quién escribió "El amor en los tiempos del cólera"?', options: ['Gabriel García Márquez', 'Jorge Luis Borges', 'Mario Vargas Llosa', 'Julio Cortázar'], answer: 'Gabriel García Márquez' },
+    { question: '¿Cuál es la obra más famosa de Ernest Hemingway?', options: ['El viejo y el mar', 'Adiós a las armas', 'Por quién doblan las campanas', 'Fiesta'], answer: 'El viejo y el mar' },
+    { question: '¿Quién escribió "Los detectives salvajes"?', options: ['Roberto Bolaño', 'Carlos Fuentes', 'Mario Vargas Llosa', 'Julio Cortázar'], answer: 'Roberto Bolaño' }
+],
+Bilogia : [
+    { question: '¿Cuál es la unidad básica de la estructura y función de los seres vivos?', options: ['Célula', 'Átomo', 'Organelo', 'Molécula'], answer: 'Célula' },
+    { question: '¿Cómo se llama el proceso mediante el cual los organismos producen energía a partir de los alimentos?', options: ['Respiración', 'Fotosíntesis', 'Digestión', 'Excreción'], answer: 'Respiración' },
+    { question: '¿Qué función cumple el ADN en las células?', options: ['Almacena la información genética', 'Facilita la respiración celular', 'Produce proteínas', 'Regula la temperatura interna'], answer: 'Almacena la información genética' },
+    { question: '¿Cuál es la función principal de las mitocondrias en las células?', options: ['Producir energía', 'Almacenar agua', 'Producir proteínas', 'Almacenar nutrientes'], answer: 'Producir energía' },
+    { question: '¿Qué tipo de reproducción se lleva a cabo cuando un organismo se divide en dos o más partes y cada parte regenera el organismo completo?', options: ['Reproducción asexual', 'Reproducción sexual', 'Reproducción vegetativa', 'Reproducción por esporulación'], answer: 'Reproducción asexual' },
+    { question: '¿Cuál es el proceso mediante el cual las plantas captan la luz solar para convertirla en energía química?', options: ['Fotosíntesis', 'Respiración', 'Transpiración', 'Germinación'], answer: 'Fotosíntesis' },
+    { question: '¿Cuál es la función principal de los ribosomas en las células?', options: ['Sintetizar proteínas', 'Almacenar nutrientes', 'Eliminar desechos', 'Producir energía'], answer: 'Sintetizar proteínas' },
+    { question: '¿Qué nombre recibe el proceso mediante el cual los organismos vivos obtienen y utilizan la energía de los alimentos?', options: ['Metabolismo', 'Digestión', 'Respiración', 'Catabolismo'], answer: 'Metabolismo' },
+    { question: '¿Qué son los genes?', options: ['Fragmentos de ADN que contienen información genética', 'Partículas subatómicas', 'Órganos especializados', 'Unidades estructurales de las proteínas'], answer: 'Fragmentos de ADN que contienen información genética' },
+    { question: '¿Cuál es la función principal de las células nerviosas?', options: ['Transmitir impulsos eléctricos', 'Producir energía', 'Proteger el cuerpo', 'Regular la temperatura'], answer: 'Transmitir impulsos eléctricos' },
+    { question: '¿Qué nombre recibe el proceso mediante el cual los organismos vivos intercambian gases con el medio ambiente?', options: ['Respiración', 'Fotosíntesis', 'Digestión', 'Circulación'], answer: 'Respiración' },
+    { question: '¿Cuál es el sistema del cuerpo humano encargado de transportar nutrientes, oxígeno, hormonas y otras sustancias por todo el cuerpo?', options: ['Sistema circulatorio', 'Sistema respiratorio', 'Sistema digestivo', 'Sistema nervioso'], answer: 'Sistema circulatorio' },
+    { question: '¿Qué nombre recibe el proceso mediante el cual los organismos vivos eliminan los desechos de su metabolismo?', options: ['Excreción', 'Respiración', 'Digestión', 'Transpiración'], answer: 'Excreción' },
+    { question: '¿Cuál es la función principal de las células sanguíneas rojas?', options: ['Transportar oxígeno', 'Combatir infecciones', 'Producir energía', 'Coagular la sangre'], answer: 'Transportar oxígeno' },
+    { question: '¿Qué nombre recibe el proceso mediante el cual los organismos vivos convierten los alimentos en nutrientes aprovechables?', options: ['Digestión', 'Respiración', 'Fotosíntesis', 'Metabolismo'], answer: 'Digestión' },
+    { question: '¿Cuál es el órgano encargado de eliminar los desechos líquidos del cuerpo humano?', options: ['Riñón', 'Hígado', 'Pulmón', 'Páncreas'], answer: 'Riñón' },
+    { question: '¿Qué tipo de organismos producen su propio alimento a través de la fotosíntesis?', options: ['Autótrofos', 'Heterótrofos', 'Parásitos', 'Saprófitos'], answer: 'Autótrofos' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos vivos cambian a lo largo de su vida?', options: ['Desarrollo', 'Adaptación', 'Evolución', 'Crecimiento'], answer: 'Desarrollo' },
+    { question: '¿Cuál es la función principal de las células ciliadas en el oído humano?', options: ['Detectar sonidos', 'Producir cera', 'Equilibrar el cuerpo', 'Producir hormonas'], answer: 'Detectar sonidos' },
+    { question: '¿Qué nombre recibe el proceso mediante el cual los organismos vivos se adaptan al medio ambiente para sobrevivir?', options: ['Evolución', 'Adaptación', 'Mutación', 'Selección natural'], answer: 'Adaptación' }
+],
+Ecologia : [
+    { question: '¿Qué estudia la ecología?', options: ['Las relaciones entre los seres vivos y su entorno', 'El origen de la vida en la Tierra', 'Los procesos químicos de los organismos', 'La estructura interna de los seres vivos'], answer: 'Las relaciones entre los seres vivos y su entorno' },
+    { question: '¿Qué nombre recibe la interacción entre organismos de diferentes especies en la que ambos se benefician?', options: ['Simbiosis', 'Competencia', 'Depredación', 'Parasitismo'], answer: 'Simbiosis' },
+    { question: '¿Cuál es el nivel trófico de los organismos que obtienen su energía de la materia orgánica en descomposición?', options: ['Descomponedores', 'Productores', 'Consumidores primarios', 'Consumidores secundarios'], answer: 'Descomponedores' },
+    { question: '¿Cuál es el proceso mediante el cual los nutrientes vuelven al ambiente en forma de nutrientes inorgánicos?', options: ['Descomposición', 'Fotosíntesis', 'Respiración', 'Digestión'], answer: 'Descomposición' },
+    { question: '¿Qué nombre recibe el proceso de sucesión ecológica en el que un ecosistema se desarrolla desde cero en un área previamente no colonizada?', options: ['Pioneerización', 'Climax', 'Sucesión primaria', 'Sucesión secundaria'], answer: 'Sucesión primaria' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos se adaptan a su entorno con el tiempo?', options: ['Evolución', 'Adaptación', 'Mutación', 'Selección natural'], answer: 'Adaptación' },
+    { question: '¿Qué nombre recibe el lugar donde un organismo vive y se reproduce?', options: ['Hábitat', 'Ecosistema', 'Bioma', 'Comunidad'], answer: 'Hábitat' },
+    { question: '¿Cuál es el nivel trófico de los organismos que se alimentan de los productores?', options: ['Consumidores primarios', 'Consumidores secundarios', 'Consumidores terciarios', 'Descomponedores'], answer: 'Consumidores primarios' },
+    { question: '¿Qué nombre recibe el conjunto de seres vivos que habitan en un lugar determinado y las relaciones que establecen entre sí y con el ambiente?', options: ['Comunidad', 'Ecosistema', 'Bioma', 'Hábitat'], answer: 'Comunidad' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos producen su propia comida a partir de la luz solar?', options: ['Fotosíntesis', 'Respiración', 'Digestión', 'Metabolismo'], answer: 'Fotosíntesis' },
+    { question: '¿Qué nombre recibe la cantidad máxima de organismos de una especie que puede sostener un ecosistema?', options: ['Capacidad de carga', 'Tasa de crecimiento', 'Densidad de población', 'Competencia intraespecífica'], answer: 'Capacidad de carga' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos intercambian gases con su entorno?', options: ['Respiración', 'Fotosíntesis', 'Transpiración', 'Digestión'], answer: 'Respiración' },
+    { question: '¿Qué nombre recibe la relación entre organismos de diferentes especies en la que uno se beneficia y el otro resulta perjudicado?', options: ['Parasitismo', 'Mutualismo', 'Comensalismo', 'Competencia'], answer: 'Parasitismo' },
+    { question: '¿Cuál es el nivel trófico de los organismos que se alimentan de otros consumidores?', options: ['Consumidores secundarios', 'Consumidores terciarios', 'Descomponedores', 'Productores'], answer: 'Consumidores secundarios' },
+    { question: '¿Qué nombre recibe el proceso de desplazamiento de una especie de su hábitat natural?', options: ['Extrusión', 'Expulsión', 'Extinción', 'Desplazamiento'], answer: 'Desplazamiento' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos eliminan agua a través de sus tejidos?', options: ['Transpiración', 'Excreción', 'Respiración', 'Digestión'], answer: 'Transpiración' },
+    { question: '¿Qué nombre recibe la serie de cambios que experimenta un ecosistema después de un disturbio?', options: ['Sucesión ecológica', 'Pioneerización', 'Climax', 'Evolución'], answer: 'Sucesión ecológica' },
+    { question: '¿Cuál es el nivel trófico de los organismos que se alimentan de otros consumidores secundarios?', options: ['Consumidores terciarios', 'Descomponedores', 'Productores', 'Consumidores primarios'], answer: 'Consumidores terciarios' },
+    { question: '¿Qué nombre recibe la relación entre organismos de diferentes especies en la que uno se beneficia y el otro no se ve afectado?', options: ['Comensalismo', 'Mutualismo', 'Parasitismo', 'Competencia'], answer: 'Comensalismo' },
+    { question: '¿Cuál es el proceso mediante el cual los organismos obtienen energía de los nutrientes?', options: ['Respiración', 'Fotosíntesis', 'Digestión', 'Metabolismo'], answer: 'Respiración' }
+],
+
+TICs : [
+    { question: '¿Qué significa la sigla "TIC"?', options: ['Tecnologías de la Información y la Comunicación', 'Técnicas de Integración y Comunicación', 'Tecnologías de Información y Cibernética', 'Tecnologías de Información y Conectividad'], answer: 'Tecnologías de la Información y la Comunicación' },
+    { question: '¿Cuál de las siguientes no es una red social?', options: ['Google', 'Facebook', 'Instagram', 'Twitter'], answer: 'Google' },
+    { question: '¿Qué es un blog?', options: ['Un sitio web donde se publican regularmente artículos o entradas de opinión', 'Un programa de computadora para crear presentaciones', 'Una red social para profesionales', 'Un sistema operativo'], answer: 'Un sitio web donde se publican regularmente artículos o entradas de opinión' },
+    { question: '¿Cuál de las siguientes opciones no es un sistema operativo para computadoras?', options: ['iOS', 'Android', 'Windows Office', 'Linux'], answer: 'Windows Office' },
+    { question: '¿Qué es el "phishing"?', options: ['Un método utilizado por ciberdelincuentes para obtener información confidencial de forma fraudulenta', 'Un virus informático que afecta a los sistemas operativos', 'Un servicio de almacenamiento en la nube', 'Un tipo de programa antivirus'], answer: 'Un método utilizado por ciberdelincuentes para obtener información confidencial de forma fraudulenta' },
+    { question: '¿Qué es el "cloud computing"?', options: ['Un modelo de servicio que permite acceder a recursos informáticos a través de internet', 'Un virus informático que afecta a los dispositivos móviles', 'Un sistema operativo para servidores', 'Un tipo de red social'], answer: 'Un modelo de servicio que permite acceder a recursos informáticos a través de internet' },
+    { question: '¿Qué es un virus informático?', options: ['Un programa malicioso que se propaga e infecta archivos en un sistema', 'Un programa para proteger la computadora de amenazas', 'Un tipo de software para editar imágenes', 'Un dispositivo de almacenamiento de datos'], answer: 'Un programa malicioso que se propaga e infecta archivos en un sistema' },
+    { question: '¿Qué es el software libre?', options: ['Programas informáticos cuyo uso, estudio, modificación y distribución está permitido de forma gratuita', 'Software que requiere licencia para su uso y distribución', 'Un tipo de software que solo funciona en computadoras Mac', 'Un servicio de suscripción para obtener actualizaciones de software'], answer: 'Programas informáticos cuyo uso, estudio, modificación y distribución está permitido de forma gratuita' },
+    { question: '¿Qué es un firewall?', options: ['Un sistema de seguridad que controla y filtra el tráfico de red', 'Un dispositivo de almacenamiento externo', 'Un software para crear documentos', 'Un programa para editar imágenes'], answer: 'Un sistema de seguridad que controla y filtra el tráfico de red' },
+    { question: '¿Cuál de las siguientes no es una herramienta de colaboración en línea?', options: ['Microsoft Word', 'Google Docs', 'Dropbox', 'Trello'], answer: 'Microsoft Word' },
+    { question: '¿Qué es el "big data"?', options: ['Un conjunto de datos de gran volumen, variedad y velocidad de procesamiento', 'Un virus informático que afecta a los dispositivos móviles', 'Un sistema operativo para servidores', 'Un tipo de red social'], answer: 'Un conjunto de datos de gran volumen, variedad y velocidad de procesamiento' },
+    { question: '¿Qué es una VPN?', options: ['Una red privada virtual que permite conectar de forma segura a internet', 'Un tipo de virus informático', 'Un programa para crear presentaciones', 'Una red social'], answer: 'Una red privada virtual que permite conectar de forma segura a internet' },
+    { question: '¿Qué es el comercio electrónico?', options: ['La compra y venta de bienes y servicios a través de internet', 'Un sistema operativo para dispositivos móviles', 'Un programa para editar imágenes', 'Un servicio de almacenamiento en la nube'], answer: 'La compra y venta de bienes y servicios a través de internet' },
+    { question: '¿Qué es un hacker?', options: ['Una persona con conocimientos avanzados en informática que se dedica a encontrar y solucionar problemas en sistemas informáticos', 'Un programa de computadora malicioso', 'Un sistema operativo para servidores', 'Un tipo de virus informático'], answer: 'Una persona con conocimientos avanzados en informática que se dedica a encontrar y solucionar problemas en sistemas informáticos' },
+    { question: '¿Qué es un algoritmo?', options: ['Un conjunto ordenado de operaciones sistemáticas que permite hacer un cálculo y hallar la solución de un problema', 'Un tipo de virus informático', 'Un programa para crear presentaciones', 'Un sistema operativo para dispositivos móviles'], answer: 'Un conjunto ordenado de operaciones sistemáticas que permite hacer un cálculo y hallar la solución de un problema' },
+    { question: '¿Qué es la inteligencia artificial?', options: ['La capacidad de las máquinas para imitar la inteligencia humana', 'Un sistema operativo para dispositivos móviles', 'Un tipo de virus informático', 'Un programa para crear presentaciones'], answer: 'La capacidad de las máquinas para imitar la inteligencia humana' },
+    { question: '¿Qué es un ciberataque?', options: ['Un intento de dañar o infiltrarse en un sistema informático de forma maliciosa', 'Un sistema operativo para servidores', 'Un tipo de virus informático', 'Un programa para editar imágenes'], answer: 'Un intento de dañar o infiltrarse en un sistema informático de forma maliciosa' },
+    { question: '¿Cuál de las siguientes no es una característica de un buen password?', options: ['Ser corto y fácil de recordar', 'Incluir letras mayúsculas y minúsculas, números y símbolos', 'No contener información personal', 'Ser cambiado regularmente'], answer: 'Ser corto y fácil de recordar' }
+],
+                custom: []
+            },
+            secundaria: {
+                ciencias: [
+                    { question: "¿Qué planeta es conocido como el planeta rojo?", options: ["Marte", "Júpiter", "Saturno", "Venus"], answer: "Marte" },
+                    { question: '¿Qué órgano del cuerpo humano es responsable de la circulación sanguínea?', options: ['Corazón', 'Pulmones', 'Hígado', 'Riñones'], answer: 'Corazón' },
+                    { question: '¿Cuál es el proceso mediante el cual las plantas convierten la luz solar en energía química?', options: ['Fotosíntesis', 'Respiración', 'Transpiración', 'Evaporación'], answer: 'Fotosíntesis' },
+                    { question: '¿Qué gas es esencial para la respiración de los seres vivos?', options: ['Oxígeno', 'Nitrógeno', 'Dióxido de carbono', 'Hidrógeno'], answer: 'Oxígeno' },
+                    { question: '¿Cuál es la unidad básica de la vida?', options: ['Célula', 'Átomo', 'Molécula', 'Tejido'], answer: 'Célula' },
+                    { question: '¿Qué tipo de energía se almacena en los alimentos?', options: ['Energía química', 'Energía térmica', 'Energía mecánica', 'Energía eléctrica'], answer: 'Energía química' },
+                    { question: '¿Cuál es el órgano que filtra la sangre en el cuerpo humano?', options: ['Riñones', 'Corazón', 'Pulmones', 'Estómago'], answer: 'Riñones' },
+                    { question: '¿Qué parte de la célula contiene el material genético?', options: ['Núcleo', 'Citoplasma', 'Membrana celular', 'Mitocondria'], answer: 'Núcleo' },
+                    { question: '¿Cuál es el planeta más cercano al Sol?', options: ['Mercurio', 'Venus', 'Tierra', 'Marte'], answer: 'Mercurio' },
+                    { question: '¿Qué estructura en las plantas permite el intercambio de gases?', options: ['Estomas', 'Raíces', 'Flores', 'Hojas'], answer: 'Estomas' },
+                    { question: '¿Qué tipo de tejido conecta los músculos con los huesos?', options: ['Tendones', 'Ligamentos', 'Cartílago', 'Tejido adiposo'], answer: 'Tendones' },
+                    { question: '¿Qué científico propuso la teoría de la evolución por selección natural?', options: ['Charles Darwin', 'Isaac Newton', 'Albert Einstein', 'Gregor Mendel'], answer: 'Charles Darwin' },
+                    { question: '¿Qué órgano del cuerpo humano es responsable de la digestión de los alimentos?', options: ['Estómago', 'Riñones', 'Corazón', 'Pulmones'], answer: 'Estómago' },
+                    { question: '¿Cuál es el compuesto químico principal que forma el ADN?', options: ['Nucleótidos', 'Aminoácidos', 'Proteínas', 'Carbohidratos'], answer: 'Nucleótidos' },
+                    { question: '¿Qué fenómeno natural es causado por el movimiento de las placas tectónicas?', options: ['Terremotos', 'Huracanes', 'Inundaciones', 'Sequías'], answer: 'Terremotos' },
+                    { question: '¿Cuál es la capa más externa de la Tierra?', options: ['Corteza', 'Manto', 'Núcleo externo', 'Núcleo interno'], answer: 'Corteza' },
+                    { question: '¿Qué nombre recibe el proceso de formación de células sexuales?', options: ['Meiosis', 'Mitosis', 'Citosis', 'Fagocitosis'], answer: 'Meiosis' },
+                    { question: '¿Cuál es el órgano más grande del cuerpo humano?', options: ['Piel', 'Hígado', 'Cerebro', 'Pulmones'], answer: 'Piel' },
+                    { question: '¿Qué estructura celular es responsable de producir energía?', options: ['Mitocondria', 'Núcleo', 'Ribosomas', 'Lisosomas'], answer: 'Mitocondria' },
+                    { question: '¿Qué fenómeno meteorológico se mide con un barómetro?', options: ['Presión atmosférica', 'Temperatura', 'Humedad', 'Velocidad del viento'], answer: 'Presión atmosférica' },
+                    { question: '¿Cuál es el gas más abundante en la atmósfera terrestre?', options: ['Nitrógeno', 'Oxígeno', 'Dióxido de carbono', 'Argón'], answer: 'Nitrógeno' }
+                ],
+                geografia: [
+                    { question: "¿Cuál es el río más largo del mundo?", options: ["Nilo", "Amazonas", "Yangtsé", "Misisipi"], answer: "Amazonas" },
+                    { question: '¿Cuál es la capital de Francia?', options: ['Londres', 'Madrid', 'París', 'Berlín'], answer: 'París' },
+                    { question: '¿Cuál es el río más largo del mundo?', options: ['Nilo', 'Amazonas', 'Yangtsé', 'Misisipi'], answer: 'Amazonas' },
+                    { question: '¿En qué continente se encuentra Egipto?', options: ['Europa', 'Asia', 'África', 'Oceanía'], answer: 'África' },
+                    { question: '¿Cuál es el océano más grande?', options: ['Atlántico', 'Pacífico', 'Índico', 'Antártico'], answer: 'Pacífico' },
+                    { question: '¿Cuál es el país más poblado del mundo?', options: ['India', 'Estados Unidos', 'China', 'Brasil'], answer: 'China' },
+                    { question: '¿En qué país se encuentra la Torre Eiffel?', options: ['Francia', 'Italia', 'España', 'Alemania'], answer: 'Francia' },
+                    { question: '¿Cuál es el país más grande del mundo?', options: ['Rusia', 'Canadá', 'China', 'Estados Unidos'], answer: 'Rusia' },
+                    { question: '¿Qué continente tiene la mayor cantidad de países?', options: ['Europa', 'Asia', 'África', 'América'], answer: 'África' },
+                    { question: '¿Cuál es el desierto más grande del mundo?', options: ['Sahara', 'Kalahari', 'Arábigo', 'Gobi'], answer: 'Sahara' },
+                    { question: '¿En qué país se encuentra la Gran Muralla China?', options: ['China', 'Corea del Norte', 'India', 'Mongolia'], answer: 'China' },
+                    { question: '¿Cuál es el punto más alto de América?', options: ['Monte Everest', 'Monte Aconcagua', 'Monte Kilimanjaro', 'Monte McKinley'], answer: 'Monte Aconcagua' },
+                    { question: '¿Cuál es el país más pequeño del mundo?', options: ['Mónaco', 'Vaticano', 'San Marino', 'Liechtenstein'], answer: 'Vaticano' },
+                    { question: '¿Cuál es el país más grande de América del Sur?', options: ['Brasil', 'Argentina', 'Chile', 'Perú'], answer: 'Brasil' },
+                    { question: '¿Cuál es el lago más profundo del mundo?', options: ['Superior', 'Victoria', 'Baikal', 'Tanganica'], answer: 'Baikal' },
+                    { question: '¿Cuál es el estrecho que separa Europa de África?', options: ['Gibraltar', 'Bering', 'Malaca', 'Ormuz'], answer: 'Gibraltar' },
+                    { question: '¿Cuál es el país más poblado de América Latina?', options: ['Brasil', 'México', 'Argentina', 'Colombia'], answer: 'Brasil' },
+                    { question: '¿Cuál es el país con mayor cantidad de islas en el mundo?', options: ['Indonesia', 'Filipinas', 'Japón', 'Nueva Zelanda'], answer: 'Indonesia' },
+                    { question: '¿Qué país tiene forma de bota?', options: ['España', 'Italia', 'Francia', 'Grecia'], answer: 'Italia' },
+                    { question: '¿Cuál es la cordillera más larga del mundo?', options: ['Andes', 'Himalaya', 'Rocosas', 'Alpes'], answer: 'Andes' },
+                    { question: '¿Cuál es el país con mayor extensión de selva amazónica?', options: ['Brasil', 'Perú', 'Colombia', 'Venezuela'], answer: 'Brasil' }
+                ],
+                Historia : [
+    { question: '¿En qué año comenzó la Revolución Francesa?', options: ['1776', '1789', '1812', '1848'], answer: '1789' },
+    { question: '¿Quién fue el primer presidente de Estados Unidos?', options: ['Thomas Jefferson', 'John Adams', 'George Washington', 'James Madison'], answer: 'George Washington' },
+    { question: '¿Cuál fue el imperio más extenso de la historia?', options: ['Imperio Romano', 'Imperio Mongol', 'Imperio Británico', 'Imperio Español'], answer: 'Imperio Mongol' },
+    { question: '¿Qué evento histórico marcó el fin de la Edad Media y el inicio de la Edad Moderna?', options: ['La caída de Constantinopla', 'El descubrimiento de América', 'La Reforma Protestante', 'La Revolución Industrial'], answer: 'El descubrimiento de América' },
+    { question: '¿Cuál fue el período conocido como la "Peste Negra"?', options: ['Siglo XI', 'Siglo XIV', 'Siglo XVII', 'Siglo XIX'], answer: 'Siglo XIV' },
+    { question: '¿Quién fue el líder de la Revolución Rusa de 1917?', options: ['Vladimir Lenin', 'Josef Stalin', 'León Trotsky', 'Nicolás II'], answer: 'Vladimir Lenin' },
+    { question: '¿Cuál fue la primera civilización de la historia?', options: ['Egipto', 'Mesopotamia', 'China', 'India'], answer: 'Mesopotamia' },
+    { question: '¿En qué año terminó la Segunda Guerra Mundial?', options: ['1943', '1945', '1947', '1950'], answer: '1945' },
+    { question: '¿Quién fue el líder de la Revolución Cubana?', options: ['Fidel Castro', 'Che Guevara', 'Camilo Cienfuegos', 'Raul Castro'], answer: 'Fidel Castro' },
+    { question: '¿Cuál fue la primera democracia de la historia?', options: ['Grecia', 'Roma', 'Egipto', 'Persia'], answer: 'Grecia' },
+    { question: '¿Quién fue el líder de la Revolución Mexicana?', options: ['Emiliano Zapata', 'Francisco I. Madero', 'Venustiano Carranza', 'Pancho Villa'], answer: 'Francisco I. Madero' },
+    { question: '¿Qué evento histórico marcó el inicio de la Primera Guerra Mundial?', options: ['Asesinato de Francisco Fernando', 'Hundimiento del Titanic', 'Revolución Rusa', 'Inicio de la Revolución Industrial'], answer: 'Asesinato de Francisco Fernando' },
+    { question: '¿Cuál fue el primer imperio en unificar gran parte de China?', options: ['Imperio Ming', 'Imperio Qing', 'Imperio Han', 'Imperio Zhou'], answer: 'Imperio Han' },
+    { question: '¿Quién fue el líder de la Revolución Francesa?', options: ['Napoleón Bonaparte', 'Robespierre', 'Marat', 'Danton'], answer: 'Robespierre' },
+    { question: '¿Cuál fue la primera guerra mundial en la historia?', options: ['Guerra de los Cien Años', 'Guerra del Peloponeso', 'Guerra de Troya', 'Guerra de los Treinta Años'], answer: 'Guerra de los Cien Años' },
+    { question: '¿Cuál fue el evento que provocó la entrada de Estados Unidos en la Segunda Guerra Mundial?', options: ['Ataque a Pearl Harbor', 'Batalla de Midway', 'Desembarco de Normandía', 'Ataque a Hiroshima y Nagasaki'], answer: 'Ataque a Pearl Harbor' },
+    { question: '¿Cuál fue el primer país en abolir la esclavitud?', options: ['Estados Unidos', 'Francia', 'Haití', 'Reino Unido'], answer: 'Haití' },
+    { question: '¿En qué año se firmó la Declaración de Independencia de Estados Unidos?', options: ['1776', '1789', '1812', '1848'], answer: '1776' },
+    { question: '¿Quién fue el líder de la Revolución China?', options: ['Mao Zedong', 'Chiang Kai-shek', 'Sun Yat-sen', 'Deng Xiaoping'], answer: 'Mao Zedong' },
+    { question: '¿Cuál fue la causa principal de la caída del Imperio Romano de Occidente?', options: ['Invasiones bárbaras', 'Corrupción política', 'Desastres naturales', 'Guerras civiles'], answer: 'Invasiones bárbaras' }
+],
+Artes : [
+    { question: '¿Quién pintó la Mona Lisa?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Claude Monet'], answer: 'Leonardo da Vinci' },
+    { question: '¿En qué país nació el flamenco?', options: ['Francia', 'Italia', 'España', 'Portugal'], answer: 'España' },
+    { question: '¿Quién escribió la obra "Don Quijote de la Mancha"?', options: ['Miguel de Cervantes', 'Federico García Lorca', 'Pablo Neruda', 'Gabriel García Márquez'], answer: 'Miguel de Cervantes' },
+    { question: '¿Quién compuso la Quinta Sinfonía?', options: ['Wolfgang Amadeus Mozart', 'Ludwig van Beethoven', 'Johann Sebastian Bach', 'Franz Schubert'], answer: 'Ludwig van Beethoven' },
+    { question: '¿Qué estilo arquitectónico se caracteriza por sus arcos de medio punto y bóvedas de cañón?', options: ['Gótico', 'Románico', 'Barroco', 'Renacentista'], answer: 'Románico' },
+    { question: '¿Quién fue el autor de la escultura "David"?', options: ['Donatello', 'Michelangelo', 'Leonardo da Vinci', 'Rafael'], answer: 'Michelangelo' },
+    { question: '¿Cuál de estas obras es de William Shakespeare?', options: ['La Celestina', 'Romeo y Julieta', 'La Iliada', 'La Odisea'], answer: 'Romeo y Julieta' },
+    { question: '¿Qué artista es conocido por sus pinturas de los lirios de agua?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Salvador Dalí'], answer: 'Claude Monet' },
+    { question: '¿Quién fue el autor de la obra "La última cena"?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Salvador Dalí'], answer: 'Leonardo da Vinci' },
+    { question: '¿Qué estilo musical se originó en Nueva Orleans a principios del siglo XX?', options: ['Blues', 'Jazz', 'Rock', 'Hip hop'], answer: 'Jazz' },
+    { question: '¿Qué artista es conocido por su obra "La persistencia de la memoria"?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Salvador Dalí'], answer: 'Salvador Dalí' },
+    { question: '¿Quién fue el autor de la novela "Cien años de soledad"?', options: ['Gabriel García Márquez', 'Julio Cortázar', 'Mario Vargas Llosa', 'Pablo Neruda'], answer: 'Gabriel García Márquez' },
+    { question: '¿Cuál es el baile nacional de Argentina?', options: ['Tango', 'Samba', 'Rumba', 'Cha-cha-chá'], answer: 'Tango' },
+    { question: '¿Quién fue el autor de la escultura "El pensador"?', options: ['Donatello', 'Michelangelo', 'Auguste Rodin', 'Rafael'], answer: 'Auguste Rodin' },
+    { question: '¿Qué compositor es conocido por su obra "El Mesías"?', options: ['Wolfgang Amadeus Mozart', 'Ludwig van Beethoven', 'Johann Sebastian Bach', 'George Frideric Handel'], answer: 'George Frideric Handel' },
+    { question: '¿Qué estilo arquitectónico se caracteriza por sus grandes cúpulas y columnas?', options: ['Gótico', 'Barroco', 'Románico', 'Renacentista'], answer: 'Barroco' },
+    { question: '¿Quién pintó el techo de la Capilla Sixtina?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Miguel Ángel'], answer: 'Miguel Ángel' },
+    { question: '¿Cuál es la obra más famosa de Frida Kahlo?', options: ['Las dos Fridas', 'La columna rota', 'Autorretrato con collar de espinas', 'Viva la vida'], answer: 'Las dos Fridas' },
+    { question: '¿Quién escribió "Romeo y Julieta"?', options: ['William Shakespeare', 'Miguel de Cervantes', 'Federico García Lorca', 'Gabriel García Márquez'], answer: 'William Shakespeare' },
+    { question: '¿Qué pintor es conocido por su estilo surrealista y su bigote distintivo?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Salvador Dalí'], answer: 'Salvador Dalí' },
+    { question: '¿Qué instrumento musical creó Adolphe Sax?', options: ['Piano', 'Violín', 'Guitarra', 'Saxofón'], answer: 'Saxofón' },
+    { question: '¿Quién fue el autor de la obra "La noche estrellada"?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Claude Monet'], answer: 'Vincent van Gogh' },
+    { question: '¿Cuál es el baile nacional de Brasil?', options: ['Tango', 'Samba', 'Rumba', 'Cha-cha-chá'], answer: 'Samba' },
+    { question: '¿Qué pintor español es conocido por su estilo cubista?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Salvador Dalí'], answer: 'Pablo Picasso' },
+    { question: '¿Quién fue el autor de la obra "Las meninas"?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Diego Velázquez'], answer: 'Diego Velázquez' },
+    { question: '¿Qué instrumento musical tiene teclas blancas y negras y se toca con las manos?', options: ['Piano', 'Violín', 'Guitarra', 'Batería'], answer: 'Piano' },
+    { question: '¿Quién fue el autor de la novela "El amor en los tiempos del cólera"?', options: ['Gabriel García Márquez', 'Julio Cortázar', 'Mario Vargas Llosa', 'Pablo Neruda'], answer: 'Gabriel García Márquez' },
+    { question: '¿Cuál es el instrumento principal en una orquesta?', options: ['Violín', 'Piano', 'Flauta', 'Guitarra'], answer: 'Violín' },
+    { question: '¿Quién pintó "La persistencia de la memoria"?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Salvador Dalí'], answer: 'Salvador Dalí' },
+    { question: '¿Cuál de estas óperas fue compuesta por Giuseppe Verdi?', options: ['La Traviata', 'Carmen', 'El Barbero de Sevilla', 'La Bohème'], answer: 'La Traviata' },
+    { question: '¿Quién escribió "La Odisea"?', options: ['Homero', 'Virgilio', 'Sófocles', 'Platón'], answer: 'Homero' },
+    { question: '¿En qué país nació el tango?', options: ['Argentina', 'Brasil', 'Uruguay', 'Chile'], answer: 'Argentina' },
+    { question: '¿Quién pintó "El jardín de las delicias"?', options: ['Leonardo da Vinci', 'Pablo Picasso', 'Hieronymus Bosch', 'Salvador Dalí'], answer: 'Hieronymus Bosch' },
+    { question: '¿Cuál es el instrumento musical más grande de la orquesta?', options: ['Contrabajo', 'Tuba', 'Trombón', 'Corno'], answer: 'Contrabajo' },
+    { question: '¿Quién fue el autor de "La metamorfosis"?', options: ['Franz Kafka', 'George Orwell', 'Fyodor Dostoevsky', 'Hermann Hesse'], answer: 'Franz Kafka' },
+    { question: '¿Qué pintor es conocido por sus "pinturas negras"?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Claude Monet', 'Francisco de Goya'], answer: 'Francisco de Goya' },
+    { question: '¿Quién compuso "Las cuatro estaciones"?', options: ['Wolfgang Amadeus Mozart', 'Ludwig van Beethoven', 'Antonio Vivaldi', 'Johann Sebastian Bach'], answer: 'Antonio Vivaldi' }
+],
+Ingles : [
+    { question: 'What is the past simple of "go"?', options: ['Goed', 'Went', 'Gone', 'Going'], answer: 'Went' },
+    { question: 'Which word is a synonym of "happy"?', options: ['Sad', 'Joyful', 'Angry', 'Tired'], answer: 'Joyful' },
+    { question: 'How do you spell the word "beautiful"?', options: ['Beautifull', 'Beautifol', 'Beautiful', 'Beutyful'], answer: 'Beautiful' },
+    { question: 'What is the comparative form of "good"?', options: ['Better', 'Best', 'Gooder', 'More good'], answer: 'Better' },
+    { question: 'Choose the correct sentence: "He is reading a book" or "He are reading a book"?', options: ['He is reading a book', 'He are reading a book'], answer: 'He is reading a book' },
+    { question: 'What is the opposite of "hot"?', options: ['Cold', 'Warm', 'Cool', 'Freezing'], answer: 'Cold' },
+    { question: 'Which sentence is correct? "She don’t like pizza" or "She doesn’t like pizza"?', options: ['She don’t like pizza', 'She doesn’t like pizza'], answer: 'She doesn’t like pizza' },
+    { question: 'How many syllables does the word "elephant" have?', options: ['Two', 'Three', 'Four', 'Five'], answer: 'Three' },
+    { question: 'What is the past participle of "eat"?', options: ['Eated', 'Eaten', 'Ate', 'Eat'], answer: 'Eaten' },
+    { question: 'Which word is a noun? "Run", "Quickly", "Happiness", "Jumping"', options: ['Run', 'Quickly', 'Happiness', 'Jumping'], answer: 'Happiness' },
+    { question: 'What tense is this sentence in? "I will go to the beach."', options: ['Past', 'Present', 'Future', 'Future perfect'], answer: 'Future' },
+    { question: 'What is the comparative form of "far"?', options: ['Farest', 'Farrer', 'Farther', 'More far'], answer: 'Farther' },
+    { question: 'Which sentence is correct? "They is playing soccer" or "They are playing soccer"?', options: ['They is playing soccer', 'They are playing soccer'], answer: 'They are playing soccer' },
+    { question: 'Choose the correct spelling: "Receieve", "Receive", "Recieve", "Recive"', options: ['Receieve', 'Receive', 'Recieve', 'Recive'], answer: 'Receive' },
+    { question: 'What is the plural of "child"?', options: ['Childs', 'Childes', 'Children', 'Childs\''], answer: 'Children' },
+    { question: 'Which word is a verb? "Tree", "Run", "Blue", "Ball"', options: ['Tree', 'Run', 'Blue', 'Ball'], answer: 'Run' },
+    { question: 'What is the superlative form of "big"?', options: ['Bigger', 'Biggest', 'More big', 'Biger'], answer: 'Biggest' },
+    { question: 'Which sentence is correct? "I can playing the guitar" or "I can play the guitar"?', options: ['I can playing the guitar', 'I can play the guitar'], answer: 'I can play the guitar' },
+    { question: 'What is the plural of "mouse" (the animal)?', options: ['Mouses', 'Mice', 'Mouse', 'Mice\'s'], answer: 'Mice' },
+    { question: 'What is the past tense of "write"?', options: ['Writed', 'Wrote', 'Written', 'Writen'], answer: 'Wrote' }
+],
+Matematicas: [
+                { question: '¿Cuánto es 8 + 3?', options: ['9', '10', '11', '12'], answer: '11' },
+                { question: '¿Cuánto es 4 x 6?', options: ['20', '24', '25', '30'], answer: '24' },
+                { question: '¿Cuánto es 7 - 4?', options: ['2', '3', '4', '5'], answer: '3' },
+                { question: '¿Cuánto es 9 / 3?', options: ['2', '3', '4', '5'], answer: '3' },
+                { question: '¿Cuál es el resultado de (5 + 3) x 2?', options: ['12', '14', '16', '18'], answer: '16' },
+                { question: '¿Cuál es el resultado de 15 - (7 + 3)?', options: ['2', '5', '8', '10'], answer: '5' },
+                { question: '¿Cuál es el resultado de 4 x (6 + 2)?', options: ['24', '28', '32', '36'], answer: '32' },
+                { question: '¿Cuánto es 2^3?', options: ['4', '6', '8', '10'], answer: '8' },
+                { question: '¿Cuál es la raíz cuadrada de 81?', options: ['7', '8', '9', '10'], answer: '9' },
+                { question: '¿Cuánto es 3^2?', options: ['6', '7', '8', '9'], answer: '9' },
+                { question: '¿Cuál es el resultado de 2/3 + 1/3?', options: ['1/2', '2/3', '1', '3/2'], answer: '1' },
+                { question: '¿Cuál es el resultado de 1/4 x 2/3?', options: ['1/6', '1/5', '1/4', '2/7'], answer: '1/6' },
+                { question: '¿Cuánto es 0.5 x 20?', options: ['5', '10', '15', '20'], answer: '10' },
+                { question: '¿Cuánto es 3/4 de 24?', options: ['16', '18', '20', '22'], answer: '18' },
+                { question: '¿Cuál es el resultado de 2^4?', options: ['8', '12', '16', '24'], answer: '16' },
+                { question: '¿Cuál es el resultado de 5 + 1/2?', options: ['5 1/2', '5 2/3', '5 3/4', '6'], answer: '5 1/2' },
+                { question: '¿Cuál es el resultado de 3/5 - 1/5?', options: ['1/5', '2/5', '3/5', '4/5'], answer: '2/5' },
+                { question: '¿Cuánto es 2.5 x 4?', options: ['8', '10', '12', '14'], answer: '10' },
+                { question: '¿Cuál es el resultado de 1/3 de 60?', options: ['18', '20', '22', '24'], answer: '20' },
+                { question: '¿Cuál es el resultado de 1/8 x 16?', options: ['1', '2', '3', '4'], answer: '2' }
+            ],
+            Quimica: [
+                { question: '¿Cuál es el símbolo químico del agua?', options: ['H2O', 'CO2', 'NaCl', 'O2'], answer: 'H2O' },
+                { question: '¿Cuál es el planeta más grande del sistema solar?', options: ['Tierra', 'Júpiter', 'Saturno', 'Marte'], answer: 'Júpiter' },
+                { question: '¿Cuál es el proceso mediante el cual las plantas fabrican su alimento?', options: ['Fotosíntesis', 'Respiración', 'Digestión', 'Transpiración'], answer: 'Fotosíntesis' },
+                { question: '¿Cuál es el hueso más largo del cuerpo humano?', options: ['Fémur', 'Tibia', 'Húmero', 'Fibula'], answer: 'Fémur' },
+                { question: '¿Cuál es la capa más externa de la Tierra?', options: ['Corteza', 'Núcleo', 'Manto', 'Ninguna de las anteriores'], answer: 'Corteza' },
+                { question: '¿Cuál es la unidad básica de la herencia?', options: ['Gen', 'Cromosoma', 'ADN', 'Proteína'], answer: 'Gen' },
+                { question: '¿Qué gas es necesario para la respiración de los seres vivos?', options: ['Oxígeno', 'Nitrógeno', 'Dióxido de carbono', 'Hidrógeno'], answer: 'Oxígeno' },
+                { question: '¿Cuál es el proceso por el cual el agua líquida se convierte en vapor de agua?', options: ['Evaporación', 'Condensación', 'Precipitación', 'Transpiración'], answer: 'Evaporación' },
+                { question: '¿Cuál es la capa más interna de la Tierra?', options: ['Núcleo', 'Corteza', 'Manto', 'Astenosfera'], answer: 'Núcleo' },
+                { question: '¿Qué tipo de energía se obtiene de la energía del Sol?', options: ['Energía solar', 'Energía eólica', 'Energía hidráulica', 'Energía geotérmica'], answer: 'Energía solar' },
+                { question: '¿Qué órgano es responsable de bombear la sangre a todo el cuerpo?', options: ['Corazón', 'Pulmones', 'Hígado', 'Estómago'], answer: 'Corazón' },
+                { question: '¿Cuál es el proceso por el cual los seres vivos obtienen energía de los alimentos?', options: ['Digestión', 'Respiración', 'Fotosíntesis', 'Circulación'], answer: 'Digestión' },
+                { question: '¿Qué parte del cuerpo humano se encarga de regular la temperatura corporal?', options: ['Piel', 'Cerebro', 'Corazón', 'Riñones'], answer: 'Piel' },
+                { question: '¿Cuál es el nombre de la teoría que explica el origen de las especies?', options: ['Teoría de la evolución', 'Teoría del creacionismo', 'Teoría de la relatividad', 'Teoría de la gravedad'], answer: 'Teoría de la evolución' },
+                { question: '¿Cuál es la unidad básica de la vida?', options: ['Célula', 'Átomo', 'Molécula', 'Organelo'], answer: 'Célula' },
+                { question: '¿Cuál es la capa de ozono?', options: ['Una capa en la atmósfera que protege la Tierra de los rayos UV', 'Una capa de la Tierra rica en ozono', 'Una capa de la atmósfera que contiene ozono', 'Ninguna de las anteriores'], answer: 'Una capa en la atmósfera que protege la Tierra de los rayos UV' },
+                { question: '¿Cuál es el gas más abundante en la atmósfera terrestre?', options: ['Nitrógeno', 'Oxígeno', 'Dióxido de carbono', 'Argón'], answer: 'Nitrógeno' },
+                { question: '¿Cuál es el órgano encargado de eliminar los desechos líquidos del cuerpo?', options: ['Riñones', 'Hígado', 'Pulmones', 'Estómago'], answer: 'Riñones' },
+                { question: '¿Cuál es el proceso por el cual las plantas liberan oxígeno al aire?', options: ['Fotosíntesis', 'Respiración', 'Transpiración', 'Digestión'], answer: 'Fotosíntesis' },
+                { question: '¿Cuál es la parte del ojo que nos permite ver los colores?', options: ['Retina', 'Córnea', 'Pupila', 'Cristalino'], answer: 'Retina' }
+            ],
+            Español : [
+            { question: '¿Qué es un sustantivo?', options: ['Una palabra que nombra a una persona, lugar, cosa o idea', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo', 'Una palabra que indica una emoción'], answer: 'Una palabra que nombra a una persona, lugar, cosa o idea' },
+            { question: '¿Qué es un verbo?', options: ['Una palabra que describe una acción o estado', 'Una palabra que nombra a una persona, lugar, cosa o idea', 'Una palabra que modifica a un sustantivo', 'Una palabra que indica una emoción'], answer: 'Una palabra que describe una acción o estado' },
+            { question: '¿Qué es un adjetivo?', options: ['Una palabra que modifica a un sustantivo', 'Una palabra que nombra a una persona, lugar, cosa o idea', 'Una palabra que describe una acción', 'Una palabra que indica una emoción'], answer: 'Una palabra que modifica a un sustantivo' },
+            { question: '¿Qué es un pronombre?', options: ['Una palabra que sustituye a un sustantivo', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo', 'Una palabra que indica una emoción'], answer: 'Una palabra que sustituye a un sustantivo' },
+            { question: '¿Qué es una oración simple?', options: ['Una oración que contiene un solo verbo y un solo sujeto', 'Una oración que contiene dos o más verbos', 'Una oración que contiene una emoción', 'Una oración que contiene un sustantivo y un adjetivo'], answer: 'Una oración que contiene un solo verbo y un solo sujeto' },
+            { question: '¿Qué es una oración compuesta?', options: ['Una oración que contiene dos o más verbos', 'Una oración que contiene un solo verbo y un solo sujeto', 'Una oración que contiene una emoción', 'Una oración que contiene un sustantivo y un adjetivo'], answer: 'Una oración que contiene dos o más verbos' },
+            { question: '¿Qué es una metáfora?', options: ['Una figura retórica que compara dos cosas diferentes sin usar "como"', 'Una figura retórica que exagera la realidad', 'Una figura retórica que atribuye cualidades humanas a objetos inanimados', 'Una figura retórica que describe una acción repetitiva'], answer: 'Una figura retórica que compara dos cosas diferentes sin usar "como"' },
+            { question: '¿Qué es una simile?', options: ['Una figura retórica que compara dos cosas diferentes usando "como"', 'Una figura retórica que exagera la realidad', 'Una figura retórica que atribuye cualidades humanas a objetos inanimados', 'Una figura retórica que describe una acción repetitiva'], answer: 'Una figura retórica que compara dos cosas diferentes usando "como"' },
+            { question: '¿Qué es una hipérbole?', options: ['Una figura retórica que exagera la realidad', 'Una figura retórica que compara dos cosas diferentes sin usar "como"', 'Una figura retórica que atribuye cualidades humanas a objetos inanimados', 'Una figura retórica que describe una acción repetitiva'], answer: 'Una figura retórica que exagera la realidad' },
+            { question: '¿Qué es una personificación?', options: ['Una figura retórica que atribuye cualidades humanas a objetos inanimados', 'Una figura retórica que exagera la realidad', 'Una figura retórica que compara dos cosas diferentes sin usar "como"', 'Una figura retórica que describe una acción repetitiva'], answer: 'Una figura retórica que atribuye cualidades humanas a objetos inanimados' },
+            { question: '¿Qué es un antónimo?', options: ['Una palabra que tiene un significado opuesto al de otra palabra', 'Una palabra que tiene un significado similar al de otra palabra', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo'], answer: 'Una palabra que tiene un significado opuesto al de otra palabra' },
+            { question: '¿Qué es un sinónimo?', options: ['Una palabra que tiene un significado similar al de otra palabra', 'Una palabra que tiene un significado opuesto al de otra palabra', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo'], answer: 'Una palabra que tiene un significado similar al de otra palabra' },
+            { question: '¿Qué es una preposición?', options: ['Una palabra que relaciona un sustantivo con otra parte de la oración', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo', 'Una palabra que indica una emoción'], answer: 'Una palabra que relaciona un sustantivo con otra parte de la oración' },
+            { question: '¿Qué es una conjunción?', options: ['Una palabra que une palabras o grupos de palabras en una oración', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo', 'Una palabra que indica una emoción'], answer: 'Una palabra que une palabras o grupos de palabras en una oración' },
+            { question: '¿Qué es una interjección?', options: ['Una palabra o frase que expresa una emoción repentina', 'Una palabra que describe una acción', 'Una palabra que modifica a un sustantivo', 'Una palabra que relaciona un sustantivo con otra parte de la oración'], answer: 'Una palabra o frase que expresa una emoción repentina' },
+            { question: '¿Qué es el sujeto en una oración?', options: ['La persona, animal o cosa que realiza la acción del verbo', 'La acción que realiza el sujeto', 'El lugar donde ocurre la acción', 'La cualidad del sustantivo'], answer: 'La persona, animal o cosa que realiza la acción del verbo' },
+            { question: '¿Qué es el predicado en una oración?', options: ['La parte de la oración que contiene el verbo y dice algo sobre el sujeto', 'La persona, animal o cosa que realiza la acción del verbo', 'El lugar donde ocurre la acción', 'La cualidad del sustantivo'], answer: 'La parte de la oración que contiene el verbo y dice algo sobre el sujeto' },
+            { question: '¿Qué es una oración interrogativa?', options: ['Una oración que formula una pregunta', 'Una oración que expresa una emoción', 'Una oración que afirma algo', 'Una oración que da una orden'], answer: 'Una oración que formula una pregunta' },
+            { question: '¿Qué es una oración exclamativa?', options: ['Una oración que expresa una emoción fuerte o sorpresa', 'Una oración que formula una pregunta', 'Una oración que afirma algo', 'Una oración que da una orden'], answer: 'Una oración que expresa una emoción fuerte o sorpresa' },
+            { question: '¿Qué es una oración imperativa?', options: ['Una oración que da una orden o hace una petición', 'Una oración que formula una pregunta', 'Una oración que expresa una emoción', 'Una oración que afirma algo'], answer: 'Una oración que da una orden o hace una petición' }
+        ],
+
+Etica : [
+    { question: '¿Qué es la ética?', options: ['El estudio de la moral y de las obligaciones morales', 'El estudio de la historia de la humanidad', 'La búsqueda del placer como fin último', 'La práctica de la virtud'], answer: 'El estudio de la moral y de las obligaciones morales' },
+    { question: '¿Qué es la moral?', options: ['El conjunto de normas, valores y creencias que guían el comportamiento humano', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El conjunto de normas, valores y creencias que guían el comportamiento humano' },
+    { question: '¿Qué es la virtud?', options: ['Una cualidad o disposición positiva del carácter', 'La búsqueda del placer como fin último', 'El estudio de la historia de la humanidad', 'La práctica de la moral'], answer: 'Una cualidad o disposición positiva del carácter' },
+    { question: '¿Qué es el deber moral?', options: ['La obligación de actuar de acuerdo con ciertos principios éticos', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La obligación de actuar de acuerdo con ciertos principios éticos' },
+    { question: '¿Qué es la responsabilidad moral?', options: ['La obligación de asumir las consecuencias de nuestras acciones', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La obligación de asumir las consecuencias de nuestras acciones' },
+    { question: '¿Qué es el relativismo moral?', options: ['La idea de que no existen normas morales absolutas y que todo depende del contexto cultural o individual', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La idea de que no existen normas morales absolutas y que todo depende del contexto cultural o individual' },
+    { question: '¿Qué es el utilitarismo?', options: ['Una teoría ética que sostiene que las acciones son buenas en la medida en que producen la mayor felicidad para el mayor número de personas', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'Una teoría ética que sostiene que las acciones son buenas en la medida en que producen la mayor felicidad para el mayor número de personas' },
+    { question: '¿Qué es la justicia?', options: ['El principio ético que busca dar a cada persona lo que le corresponde', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El principio ético que busca dar a cada persona lo que le corresponde' },
+    { question: '¿Qué es la igualdad?', options: ['El principio ético que sostiene que todas las personas tienen el mismo valor intrínseco', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El principio ético que sostiene que todas las personas tienen el mismo valor intrínseco' },
+    { question: '¿Qué es el respeto?', options: ['La consideración y valoración de las personas, objetos o ideas', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La consideración y valoración de las personas, objetos o ideas' },
+    { question: '¿Qué es la libertad?', options: ['La capacidad de actuar según la propia voluntad, dentro de los límites de la ley y el respeto a los demás', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La capacidad de actuar según la propia voluntad, dentro de los límites de la ley y el respeto a los demás' },
+    { question: '¿Qué es la solidaridad?', options: ['La colaboración y apoyo mutuo entre las personas en momentos de dificultad', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La colaboración y apoyo mutuo entre las personas en momentos de dificultad' },
+    { question: '¿Qué es la empatía?', options: ['La capacidad de ponerse en el lugar del otro y comprender sus sentimientos', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La capacidad de ponerse en el lugar del otro y comprender sus sentimientos' },
+    { question: '¿Qué es la honestidad?', options: ['La sinceridad y rectitud en el comportamiento y las acciones', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La sinceridad y rectitud en el comportamiento y las acciones' },
+    { question: '¿Qué es el altruismo?', options: ['La preocupación desinteresada por el bienestar de los demás', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La preocupación desinteresada por el bienestar de los demás' },
+    { question: '¿Qué es la conciencia moral?', options: ['La capacidad de distinguir entre el bien y el mal y de sentirse culpable cuando se hace algo malo', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La capacidad de distinguir entre el bien y el mal y de sentirse culpable cuando se hace algo malo' },
+    { question: '¿Qué es el egoísmo?', options: ['La tendencia a anteponer el interés propio al de los demás', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La tendencia a anteponer el interés propio al de los demás' },
+    { question: '¿Qué es la empatía?', options: ['La capacidad de ponerse en el lugar del otro y comprender sus sentimientos', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La capacidad de ponerse en el lugar del otro y comprender sus sentimientos' },
+    { question: '¿Qué es la equidad?', options: ['El principio ético que busca dar a cada persona lo que se merece según sus méritos y circunstancias', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El principio ético que busca dar a cada persona lo que se merece según sus méritos y circunstancias' },
+    { question: '¿Qué es la gratitud?', options: ['El sentimiento de agradecimiento hacia alguien que ha hecho algo bueno por nosotros', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El sentimiento de agradecimiento hacia alguien que ha hecho algo bueno por nosotros' },
+    { question: '¿Qué es la tolerancia?', options: ['El respeto hacia las ideas, creencias o prácticas de los demás aunque sean diferentes o contrarias a las propias', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El respeto hacia las ideas, creencias o prácticas de los demás aunque sean diferentes o contrarias a las propias' },
+    { question: '¿Qué es la humildad?', options: ['La cualidad de ser modesto y reconocer nuestras limitaciones y errores', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La cualidad de ser modesto y reconocer nuestras limitaciones y errores' },
+    { question: '¿Qué es la envidia?', options: ['El sentimiento de tristeza o enojo por el bien ajeno o por el deseo de algo que otro tiene', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'El sentimiento de tristeza o enojo por el bien ajeno o por el deseo de algo que otro tiene' },
+    { question: '¿Qué es la paciencia?', options: ['La capacidad de tolerar las dificultades o retrasos sin molestarse', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La capacidad de tolerar las dificultades o retrasos sin molestarse' },
+    { question: '¿Qué es el perdón?', options: ['La acción de dejar de sentir enojo o resentimiento hacia alguien que nos ha hecho daño', 'La búsqueda del placer como fin último', 'La práctica de la virtud', 'El estudio de la historia de la humanidad'], answer: 'La acción de dejar de sentir enojo o resentimiento hacia alguien que nos ha hecho daño' }
+],
+Fisica : [
+    { question: '¿Qué es la física?', options: ['La ciencia que estudia las propiedades de la materia y la energía', 'La ciencia que estudia los seres vivos', 'La ciencia que estudia los fenómenos sociales', 'La ciencia que estudia los planetas y estrellas'], answer: 'La ciencia que estudia las propiedades de la materia y la energía' },
+    { question: '¿Qué es la fuerza?', options: ['Una magnitud que puede deformar un cuerpo', 'Una magnitud que puede cambiar la velocidad de un cuerpo', 'Una magnitud que puede cambiar la posición de un cuerpo', 'Una magnitud que mide la cantidad de materia en un cuerpo'], answer: 'Una magnitud que puede cambiar la velocidad de un cuerpo' },
+    { question: '¿Qué es la velocidad?', options: ['La distancia recorrida por unidad de tiempo', 'La rapidez con la que se mueve un cuerpo', 'La fuerza que se opone al movimiento', 'La cantidad de materia en un cuerpo'], answer: 'La distancia recorrida por unidad de tiempo' },
+    { question: '¿Qué es la aceleración?', options: ['El cambio de velocidad por unidad de tiempo', 'La distancia recorrida por unidad de tiempo', 'La fuerza que se opone al movimiento', 'La rapidez con la que se mueve un cuerpo'], answer: 'El cambio de velocidad por unidad de tiempo' },
+    { question: '¿Cuál es la unidad de medida de la fuerza en el sistema internacional?', options: ['Newton', 'Joule', 'Voltio', 'Amperio'], answer: 'Newton' },
+    { question: '¿Cuál es la unidad de medida de la velocidad en el sistema internacional?', options: ['Metro por segundo', 'Kilómetro por hora', 'Centímetro por segundo', 'Kilómetro por segundo'], answer: 'Metro por segundo' },
+    { question: '¿Cuál es la unidad de medida de la aceleración en el sistema internacional?', options: ['Metro por segundo al cuadrado', 'Kilómetro por hora al cuadrado', 'Centímetro por segundo al cuadrado', 'Kilómetro por segundo al cuadrado'], answer: 'Metro por segundo al cuadrado' },
+    { question: '¿Qué es la gravedad?', options: ['La fuerza que atrae los cuerpos hacia la Tierra', 'La fuerza que mantiene unidos los átomos en una molécula', 'La fuerza que se opone al movimiento', 'La cantidad de materia en un cuerpo'], answer: 'La fuerza que atrae los cuerpos hacia la Tierra' },
+    { question: '¿Qué es la masa?', options: ['La cantidad de materia en un cuerpo', 'La fuerza que atrae los cuerpos hacia la Tierra', 'La fuerza que mantiene unidos los átomos en una molécula', 'La fuerza que se opone al movimiento'], answer: 'La cantidad de materia en un cuerpo' },
+    { question: '¿Qué es el peso?', options: ['La fuerza con la que la gravedad atrae un cuerpo hacia la Tierra', 'La cantidad de materia en un cuerpo', 'La fuerza que mantiene unidos los átomos en una molécula', 'La fuerza que se opone al movimiento'], answer: 'La fuerza con la que la gravedad atrae un cuerpo hacia la Tierra' },
+    { question: '¿Qué es la energía cinética?', options: ['La energía que un cuerpo tiene debido a su movimiento', 'La energía que un cuerpo tiene debido a su posición', 'La energía que un cuerpo tiene debido a su temperatura', 'La energía que un cuerpo tiene debido a su forma'], answer: 'La energía que un cuerpo tiene debido a su movimiento' },
+    { question: '¿Qué es la energía potencial?', options: ['La energía que un cuerpo tiene debido a su posición', 'La energía que un cuerpo tiene debido a su movimiento', 'La energía que un cuerpo tiene debido a su temperatura', 'La energía que un cuerpo tiene debido a su forma'], answer: 'La energía que un cuerpo tiene debido a su posición' },
+    { question: '¿Cuál es la fórmula para calcular la velocidad?', options: ['v = d / t', 'v = t / d', 'v = d * t', 'v = d + t'], answer: 'v = d / t' },
+    { question: '¿Cuál es la fórmula para calcular la aceleración?', options: ['a = (vf - vi) / t', 'a = vf / vi', 'a = vf + vi / t', 'a = vf * vi * t'], answer: 'a = (vf - vi) / t' },
+    { question: '¿Cuál es la fórmula para calcular la fuerza?', options: ['F = m * a', 'F = m / a', 'F = m + a', 'F = m - a'], answer: 'F = m * a' },
+    { question: '¿Qué es la fricción?', options: ['Una fuerza que se opone al movimiento', 'Una fuerza que mantiene unidos los átomos en una molécula', 'Una fuerza que atrae los cuerpos hacia la Tierra', 'Una fuerza que cambia la velocidad de un cuerpo'], answer: 'Una fuerza que se opone al movimiento' },
+    { question: '¿Qué es la inercia?', options: ['La tendencia de los cuerpos a permanecer en su estado de movimiento o reposo', 'La fuerza que se opone al movimiento', 'La cantidad de materia en un cuerpo', 'La fuerza que atrae los cuerpos hacia la Tierra'], answer: 'La tendencia de los cuerpos a permanecer en su estado de movimiento o reposo' },
+    { question: '¿Qué es la acción y reacción?', options: ['Principio en el que por cada acción hay una reacción igual y opuesta', 'Principio en el que la fuerza es igual a la masa por la aceleración', 'Principio en el que la fuerza es igual a la masa por la velocidad', 'Principio en el que la fuerza es igual al cambio de momento'], answer: 'Principio en el que por cada acción hay una reacción igual y opuesta' },
+    { question: '¿Qué es la ley de la conservación de la energía?', options:    ['La energía no se crea ni se destruye, solo se transforma', 'La energía total de un sistema aislado se mantiene constante en el tiempo', 'La energía cinética y potencial de un cuerpo se conserva en un sistema', 'La energía térmica de un sistema se conserva en el tiempo'], answer: 'La energía no se crea ni se destruye, solo se transforma' },
+    { question: '¿Qué es la ley de la conservación de la cantidad de movimiento?', options: ['La cantidad total de movimiento de un sistema aislado se mantiene constante en el tiempo', 'La cantidad total de energía de un sistema aislado se mantiene constante en el tiempo', 'La cantidad total de materia de un sistema aislado se mantiene constante en el tiempo', 'La cantidad total de masa de un sistema aislado se mantiene constante en el tiempo'], answer: 'La cantidad total de movimiento de un sistema aislado se mantiene constante en el tiempo' },
+    { question: '¿Cuál es la primera ley de la termodinámica?', options: ['La energía no se crea ni se destruye, solo se transforma', 'El calor fluye de un cuerpo caliente a uno frío', 'La entropía de un sistema aislado tiende a aumentar', 'La presión de un gas es inversamente proporcional a su volumen'], answer: 'La energía no se crea ni se destruye, solo se transforma' },
+    { question: '¿Qué tipo de onda es el sonido?', options: ['Onda electromagnética', 'Onda mecánica', 'Onda longitudinal', 'Onda transversal'], answer: 'Onda longitudinal' },
+    { question: '¿Cuál es la unidad de medida de la frecuencia de una onda?', options: ['Hertz', 'Watt', 'Joule', 'Newton'], answer: 'Hertz' },
+    { question: '¿Qué ley de la física describe cómo se comportan los gases ideales?', options: ['Ley de Boyle', 'Ley de Charles', 'Ley de Avogadro', 'Ley de Dalton'], answer: 'Ley de Boyle' },
+    { question: '¿Cuál es la unidad de medida de la resistencia eléctrica?', options: ['Ohmio', 'Amperio', 'Voltio', 'Watt'], answer: 'Ohmio' },
+    { question: '¿Qué ley de la física describe la relación entre la carga eléctrica, la distancia y la fuerza eléctrica?', options: ['Ley de Coulomb', 'Ley de la Gravitación Universal', 'Tercera Ley de Newton', 'Ley de la Inercia'], answer: 'Ley de Coulomb' },
+    { question: '¿Qué tipo de energía se encuentra en un objeto en reposo?', options: ['Energía potencial', 'Energía cinética', 'Energía mecánica', 'Energía térmica'], answer: 'Energía potencial' },
+    { question: '¿Cuál es la segunda ley de la termodinámica?', options: ['La entropía de un sistema aislado tiende a aumentar', 'El calor fluye de un cuerpo caliente a uno frío', 'La energía no se crea ni se destruye, solo se transforma', 'La presión de un gas es inversamente proporcional a su volumen'], answer: 'La entropía de un sistema aislado tiende a aumentar' },
+    { question: '¿Qué tipo de fuerza mantiene unidos los átomos en una molécula?', options: ['Fuerza electromagnética', 'Fuerza nuclear fuerte', 'Fuerza nuclear débil', 'Fuerza gravitatoria'], answer: 'Fuerza electromagnética' },
+    { question: '¿Cuál es la unidad de medida del trabajo en el sistema internacional?', options: ['Joule', 'Amperio', 'Voltio', 'Watt'], answer: 'Joule' },
+    { question: '¿Cuál es la unidad de medida de la potencia en el sistema internacional?', options: ['Watt', 'Amperio', 'Voltio', 'Joule'], answer: 'Watt' },
+    { question: '¿Qué ley de la física establece que "todo cuerpo persevera en su estado de reposo o movimiento uniforme en línea recta a menos que sea obligado a cambiar su estado por fuerzas impresas sobre él"?', options: ['Primera Ley de Newton', 'Segunda Ley de Newton', 'Tercera Ley de Newton', 'Ley de la Inercia'], answer: 'Primera Ley de Newton' }
+],
+                custom: []
+            },
+            PO: []
+        };
+
+        let currentQuestion = 0;
+        let score = 0;
+        let currentLevel = '';
+        let currentSubject = '';
+        let lives = 3;
+        let timer;
+        let timeLeft = 120; // 2 minutos en segundos
+
+        function startTimer() {
+            timeLeft = 120; // Reiniciar a 2 minutos
+            document.getElementById('timer').textContent = 'Tiempo: 02:00';
+            timer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `Tiempo: ${minutes}:${seconds}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    loseLife();
+                }
+            }, 1000);
+        }
+
+        function loseLife() {
+            lives--;
+            document.getElementById('lives').textContent = `Vidas: ${lives}`;
+            if (lives <= 0) {
+                endGame();
+            } else {
+                showQuestion(currentLevel, currentSubject);
+            }
+        }
+
+        function showQuestion(level, subject) {
+            if (timer) {
+                clearInterval(timer);
+            }
+            startTimer();
+            const question = questions[level][subject][currentQuestion];
+            document.getElementById('question').textContent = question.question;
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            question.options.forEach((option) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => {
+                    clearInterval(timer);
+                    if (option === question.answer) {
+                        score++;
+                        currentQuestion++;
+                        if (currentQuestion < questions[level][subject].length) {
+                            showQuestion(level, subject);
+                        } else {
+                            endGame();
+                        }
+                    } else {
+                        loseLife();
+                    }
+                });
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            document.getElementById('finalScore').textContent = `Juego terminado. Puntuación: ${score}/${questions[currentLevel][currentSubject].length}`;
+            score = 0;
+            currentQuestion = 0;
+            currentLevel = '';
+            currentSubject = '';
+            lives = 3;
+            document.getElementById('lives').textContent = 'Vidas: 3';
+            document.getElementById('timer').textContent = 'Tiempo: 02:00';
+            const backgroundAudio = document.getElementById('backgroundAudio');
+            backgroundAudio.pause();
+        }
+
+        document.getElementById('btnPlay').addEventListener('click', () => {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('levelSelection').style.display = 'block';
+            const backgroundAudio = document.getElementById('backgroundAudio');
+            backgroundAudio.play();
+        });
+
+        document.getElementById('btnPrepa').addEventListener('click', () => {
+            currentLevel = 'prepa';
+            showSubjectSelection();
+        });
+
+        document.getElementById('btnSecundaria').addEventListener('click', () => {
+            currentLevel = 'secundaria';
+            showSubjectSelection();
+        });
+
+        document.getElementById('btnBackToMenu').addEventListener('click', () => {
+            document.getElementById('levelSelection').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+        });
+
+        document.getElementById('btnBackToLevel').addEventListener('click', () => {
+            document.getElementById('subjectSelection').style.display = 'none';
+            document.getElementById('levelSelection').style.display = 'block';
+        });
+
+        document.getElementById('btnBackToMenuFromEnd').addEventListener('click', () => {
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+        });
+
+        document.getElementById('btnCancelAddQuestion').addEventListener('click', () => {
+            document.getElementById('customQuestionForm').style.display = 'none';
+            document.getElementById('perso').style.display = 'block';
+        });
+
+        function showSubjectSelection() {
+            document.getElementById('levelSelection').style.display = 'none';
+            document.getElementById('subjectSelection').style.display = 'block';
+
+            const subjects = Object.keys(questions[currentLevel]).filter(subject => subject !== 'custom');
+            const subjectSelectionContainer = document.getElementById('subjects');
+            subjectSelectionContainer.innerHTML = '';
+            subjects.forEach((subject) => {
+                const button = document.createElement('button');
+                button.textContent = subject.charAt(0).toUpperCase() + subject.slice(1);
+                button.addEventListener('click', () => {
+                    currentSubject = subject;
+                    document.getElementById('subjectSelection').style.display = 'none';
+                    document.getElementById('questionContainer').style.display = 'block';
+                    showQuestion(currentLevel, currentSubject);
+                });
+                subjectSelectionContainer.appendChild(button);
+            });
+
+            // Botón para ver preguntas personalizadas
+            const poButton = document.createElement('button');
+            poButton.textContent = 'Preguntas Personalizadas';
+            poButton.addEventListener('click', () => {
+                currentSubject = 'custom';
+                document.getElementById('subjectSelection').style.display = 'none';
+                document.getElementById('perso').style.display = 'block';
+                showCustomQuestions();
+            });
+            subjectSelectionContainer.appendChild(poButton);
+        }
+        function showCustomQuestions() {
+            const customQuestionsList = document.getElementById('customQuestionsList');
+            customQuestionsList.innerHTML = '';
+        
+            const customQuestions = questions[currentLevel].custom;
+            customQuestions.forEach((question, index) => {
+                const li = document.createElement('li');
+                const questionText = document.createElement('span');
+                questionText.textContent = `${index + 1}. ${question.question}`;
+                li.appendChild(questionText);
+        
+                const optionsContainer = document.createElement('div');
+                question.options.forEach((option, i) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.addEventListener('click', () => {
+                        if (option === question.answer) {
+                            button.style.backgroundColor = 'green';
+                            button.disabled = true;
+                        } else {
+                            button.style.backgroundColor = 'red';
+                        }
+                    });
+                    optionsContainer.appendChild(button);
+                });
+        
+                li.appendChild(optionsContainer);
+                customQuestionsList.appendChild(li);
+            });
+        }
+
+        document.getElementById('btnAddCustomQuestion').addEventListener('click', () => {
+            document.getElementById('perso').style.display = 'none';
+            document.getElementById('customQuestionForm').style.display = 'block';
+        });
+
+        const form = document.getElementById('customQuestionFormForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const questionInput = document.getElementById('questionInput');
+            const optionsInput = document.getElementById('optionsInput');
+            const answerInput = document.getElementById('answerInput');
+            const newQuestion = {
+                question: questionInput.value,
+                options: optionsInput.value.split(',').map(option => option.trim()),
+                answer: answerInput.value.trim()
+            };
+            questions[currentLevel].custom.push(newQuestion);
+            questionInput.value = '';
+            optionsInput.value = '';
+            answerInput.value = '';
+            document.getElementById('customQuestionForm').style.display = 'none';
+            document.getElementById('perso').style.display = 'block';
+            showCustomQuestions();
+        });
+
+        document.getElementById('btnBackToSubjectSelectionCustom').addEventListener('click', () => {
+            document.getElementById('perso').style.display = 'none';
+            document.getElementById('subjectSelection').style.display = 'block';
+        });
+
+        document.getElementById('btnExit').addEventListener('click', () => {
+            window.close();
+        });
+    </script>
+    <footer>&copy; Oliver y Flor 2024
+</body>
+</html>
